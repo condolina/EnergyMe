@@ -46,6 +46,17 @@ public class MainActivity extends AppCompatActivity {
         }
         msgPSt.doRead();
 
+        MsgPackRandomAccess msgRandom = new MsgPackRandomAccess(context);
+
+
+        try{
+            msgRandom.doWrite(numData);
+        }catch(IOException e){
+            Log.e("Error MsgPackrandowrite",e.toString());
+        }
+
+        msgRandom.doRead();
+
         textView.setText("OK");
         setContentView(textView);
 
