@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 
 import org.msgpack.core.*;
@@ -129,11 +130,8 @@ public class MsgPSerializer extends SerializeMe {
 
         msgPk.close();
 
+
         File out = new File(context.getFilesDir(),outfile);
-
-
-
-
 
         // Serialize BlockReal matices with message pack and write to file
         // for nio implementation use writeablebytechannel instead of outputstream
@@ -142,6 +140,8 @@ public class MsgPSerializer extends SerializeMe {
             FileOutputStream fileOut = new FileOutputStream(out);
 
             fileOut.write(buff);
+
+
             fileOut.close();
 
         } catch (FileNotFoundException e) {
