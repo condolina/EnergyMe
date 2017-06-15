@@ -27,6 +27,9 @@ import org.msgpack.value.*;
 public class MsgPSerializer extends SerializeMe {
 
     Context context ;
+    ArrayList <Array2DRowRealMatrix> mat2D;
+    ArrayList <ArrayRealVector> snapshots;
+
 
     public MsgPSerializer(Context context) {
         super();
@@ -51,8 +54,8 @@ public class MsgPSerializer extends SerializeMe {
             in.close();
             int numMatrix = unMsgPk.unpackInt();
             int numVector = unMsgPk.unpackInt();
-            ArrayList <Array2DRowRealMatrix> mat2D = new ArrayList<Array2DRowRealMatrix>();
-            ArrayList <ArrayRealVector> snapshots = new ArrayList <ArrayRealVector>();
+            mat2D = new ArrayList<Array2DRowRealMatrix>();
+            snapshots = new ArrayList <ArrayRealVector>();
 
             for (int l=0;l<numMatrix;l++){
                 int row = unMsgPk.unpackInt();

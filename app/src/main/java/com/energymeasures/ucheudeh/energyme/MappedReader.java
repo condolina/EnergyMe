@@ -16,7 +16,7 @@ import java.nio.channels.FileChannel;
 
 public class MappedReader extends SimpleReader {
 
-    public MappedReader(File path){
+    public MappedReader(File path) throws IOException {
         super(path);
         this.mode = "Mapped_Reader";
         try {
@@ -31,7 +31,12 @@ public class MappedReader extends SimpleReader {
     void readIn() throws IOException, FileNotFoundException {
         final int INT_LENGHT = 4;
 
+        timeStamps.add(System.nanoTime());//Start file mapping
+
+
         MappedByteBuffer dataBuff = fc.map(FileChannel.MapMode.READ_ONLY,INT_LENGHT,fc.size()-INT_LENGHT);
+
+        timeStamps.add(System.nanoTime());//end file mapping Buffer Ready for extraction
         fc.close();
         composerFactory(dataBuff);
     }

@@ -11,7 +11,7 @@ import java.nio.channels.FileChannel;
 
 /**
  * Created by ucheudeh on 6/11/17. Java NIO is considered more efficient than Java IO. As such we
- * will have a bias towards Java NIO where ever possible. As such Channels and Buffers will be used
+ * will have a bias towards Java NIO where ever possible. Channels and Buffers will be used
  * for all IOs
  */
 
@@ -19,7 +19,7 @@ class SimpleReader extends Reader {
 
     FileChannel fc;
 
-    public SimpleReader(File path){
+    public SimpleReader(File path) throws IOException {
         super(path);
         this.mode = "Simple_Reader";
         try {
@@ -43,18 +43,21 @@ class SimpleReader extends Reader {
          */
 
 
-        startTime = System.nanoTime();
+        timeStamps.add(System.nanoTime());
 
 
 
         readIn();
 
 
-        endTime = System.nanoTime();
+        timeStamps.add(System.nanoTime());
         /*
         TODO: Send Stop Trigger to power tool
 
+        norm the CVSWriter for now
+        csvWriter2File();
          */
+
 
 
     }
@@ -64,14 +67,22 @@ class SimpleReader extends Reader {
         Header of the file contains the size of the data and is used to determine the
         proper buffer size for a single buffer fill.
          */
+        timeStamps.add(System.nanoTime());//Buffer allocate header start/read data to Buffer_Start
         ByteBuffer headerBuff = ByteBuffer.allocate(4);
         // TODO Consider locking the file here and releasing just before return
+        //timeStamps.add(System.nanoTime()); // Buffer allocate header end
         fc.read(headerBuff);
+        //timeStamps.add(System.nanoTime());fill header buffer
         headerBuff.flip();
+        //timeStamps.add(System.nanoTime());// buffer allocate main buffer start
         ByteBuffer dataBuff = getBuffer(headerBuff.getInt());
+        //timeStamps.add(System.nanoTime());// buffer allocate main_end/start fill buffer
         fc.read(dataBuff);
+        //timeStamps.add(System.nanoTime());// fill main buffer end
         fc.close();
         dataBuff.flip();
+        timeStamps.add(System.nanoTime());//Read Data to buffer_end
+
 
         composerFactory(dataBuff);
 

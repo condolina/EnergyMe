@@ -1,12 +1,13 @@
 package com.energymeasures.ucheudeh.energyme;
 
+import com.opencsv.CSVWriter;
+
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.BlockRealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -23,10 +24,14 @@ public abstract class Reader {
     File path;
     ArrayList<Array2DRowRealMatrix> matriceTable;
     ArrayList<RealVector> vectorTable;
+    ArrayList<Long> timeStamps = new ArrayList<Long>();// will be written out to CVS later
 
-    public Reader(File path){
+
+
+    public Reader(File path) throws IOException {
 
         this.path = path;
+
     }
     public enum ComposerMode{
         VECTOR,MATRIX
@@ -55,7 +60,15 @@ public abstract class Reader {
         ComposerMode mode = null;
 
 
+
+
         dataSize = dataBuff.remaining();
+         /*
+         This methods recieves a Buffer may contain 1 to N records and composes all records in Buffer
+         by looping thru each record header in the buffer. Every buffer starts with a header:
+         number of rows (see diagram of the structure of the buffer). This method uses the header
+         identify matrix or vector and calls the appropriate Composer
+          */
         while (dataBuff.hasRemaining()) {
             int numRows = dataBuff.getInt();
             if (numRows == 1) mode = ComposerMode.VECTOR;
@@ -90,6 +103,8 @@ public abstract class Reader {
         method advances the position. Otherwise Absolute gets(index) will be used on the buffer.
          */
 
+        timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
+
 
 
             int row = numRows;
@@ -110,13 +125,18 @@ public abstract class Reader {
                 }
                 //
             }
-
-        return (new Array2DRowRealMatrix(backingMatrix));
+        timeStamps.add(System.nanoTime());//backing array End
+        //
+        Array2DRowRealMatrix minx = new Array2DRowRealMatrix(backingMatrix);
+        timeStamps.add(System.nanoTime());//Object Construction _End Composer end
+        return (minx);
     }
 
 
 
     public ArrayRealVector vectorComposer (ByteBuffer dataBuff){
+
+        timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
 
 
         int numElements = dataBuff.getInt();
@@ -130,10 +150,27 @@ public abstract class Reader {
         for (int w=0; w<numElements;w++){
             backingVector[w] = dataBuff.getDouble();
         }
+        timeStamps.add(System.nanoTime());//backing array End
+        ArrayRealVector vinx = new ArrayRealVector(backingVector);
 
-        return (new ArrayRealVector(backingVector));
+        timeStamps.add(System.nanoTime());//Object Construction _End Composer end
+
+
+        return (vinx);
     }
 
+
+     void csvWriter2File() throws IOException {
+
+        CSVWriter csvWriter=new CSVWriter((new FileWriter(path.toString().substring(0,(path.toString().length()-4)).concat("TimeStamps"))));
+
+       String [] csvString = new String[timeStamps.size()];
+        for(int i = 0; i<csvString.length;i++){
+            csvString[i]=timeStamps.get(i).toString();
+        }
+        csvWriter.writeNext(csvString);
+        csvWriter.close();
+    }
 
 
 }
