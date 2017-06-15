@@ -76,11 +76,15 @@ public class JSerializer extends SerializeMe {
 
             in3.close();
 
+            Log.i("JSer First element : ",Double.toString(matList.get(0).getEntry(1,1)));
+
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+
+
 
 
     }

@@ -79,6 +79,8 @@ public class MsgPSerializer extends SerializeMe {
 
             }
 
+            Log.i("MsgPRE First element : ",Double.toString(mat2D.get(0).getEntry(1,1)));
+
 
         } catch (IOException e) {
             // TODO: optimisation make a tag string object that is passed to all log entry for message pack

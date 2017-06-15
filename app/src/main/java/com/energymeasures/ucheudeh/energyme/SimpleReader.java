@@ -58,24 +58,22 @@ class SimpleReader extends Reader {
         csvWriter2File();
          */
 
+        Log.i("EneM First element : ",Double.toString(this.getFirstMatrix().getEntry(1,1)));
+
 
 
     }
 
     void readIn() throws IOException, FileNotFoundException {
         /*
-        Header of the file contains the size of the data and is used to determine the
-        proper buffer size for a single buffer fill.
+        Get the size of the file and make a buffer to contain the entire File.
          */
         timeStamps.add(System.nanoTime());//Buffer allocate header start/read data to Buffer_Start
-        ByteBuffer headerBuff = ByteBuffer.allocate(4);
+
         // TODO Consider locking the file here and releasing just before return
-        //timeStamps.add(System.nanoTime()); // Buffer allocate header end
-        fc.read(headerBuff);
-        //timeStamps.add(System.nanoTime());fill header buffer
-        headerBuff.flip();
-        //timeStamps.add(System.nanoTime());// buffer allocate main buffer start
-        ByteBuffer dataBuff = getBuffer(headerBuff.getInt());
+
+        int dBuffSize = (int)fc.size();// only for testing will be passed directly on nextline
+        ByteBuffer dataBuff = getBuffer(dBuffSize);
         //timeStamps.add(System.nanoTime());// buffer allocate main_end/start fill buffer
         fc.read(dataBuff);
         //timeStamps.add(System.nanoTime());// fill main buffer end

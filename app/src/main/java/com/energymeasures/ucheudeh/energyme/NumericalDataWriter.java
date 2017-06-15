@@ -44,7 +44,7 @@ public class NumericalDataWriter {
 
     void write(SnapshotsBasket numData) throws IOException {
 
-        File path = new File(context.getFilesDir(),"regMapped1");
+        File path = new File(context.getFilesDir(),"regMapped1.dat");
         fc = new FileOutputStream(path).getChannel();
 
         int numMatrix = numData.getAmSize();

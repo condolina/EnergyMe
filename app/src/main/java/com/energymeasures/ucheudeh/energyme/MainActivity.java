@@ -46,7 +46,10 @@ public class MainActivity extends AppCompatActivity {
         Log.i("Java SerWriteTIme-", Long.toString(jWEtime-jWStime));
 
         // Test read time here for Bigfile
+        long jRStime = System.nanoTime();
         jSt.doRead();
+        long jREtime = System.nanoTime();
+        Log.i("Java SerReadTime-", Long.toString(jREtime-jRStime));
 
 
         MsgPSerializer msgPSt = new MsgPSerializer(context);
@@ -59,7 +62,11 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             Log.e("Error MsgPackwrite",e.toString());
         }
+
+        long msgRStime = System.nanoTime();
         msgPSt.doRead();
+        long msgREtime = System.nanoTime();
+        Log.i("msgPReadTIme-", Long.toString(msgREtime-msgRStime));
 
         MsgPackRandomAccess msgRandom = new MsgPackRandomAccess(context);
 
@@ -84,18 +91,38 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
+
     }
 
     private void experiment(Context context) throws IOException {
 
 
-            NumericalDataWriter regMap = new NumericalDataWriter(context);
+            NumericalDataWriter regMapW = new NumericalDataWriter(context);
             long eMeWStime = System.nanoTime();
 
-            regMap.write(numData);
+            regMapW.write(numData);
 
         long eMeWEtime = System.nanoTime();
         Log.i("EnerMeWriteTIme-", Long.toString(eMeWEtime-eMeWStime));
+
+        /*
+        Do some house keeping here. Force cache dump to storage and clear page cache
+        Force GC :-O will an unrooted phone even allow an application to do this!!!!
+        I doubt it :-/. Well some research need here.
+
+         */
+        File path = new File (context.getFilesDir(),"regMapped1.dat");
+
+
+
+
+        SimpleReader regMapR = new SimpleReader(path);
+        long eMeRStime = System.nanoTime();
+        regMapR.read();
+        long eMeREtime = System.nanoTime();
+        Log.i("EnerMeREADTIme-", Long.toString(eMeREtime-eMeRStime));
+
 
 
 

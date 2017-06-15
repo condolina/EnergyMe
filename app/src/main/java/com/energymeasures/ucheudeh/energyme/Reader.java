@@ -1,5 +1,7 @@
 package com.energymeasures.ucheudeh.energyme;
 
+import android.util.Log;
+
 import com.opencsv.CSVWriter;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -22,8 +24,8 @@ public abstract class Reader {
     double startTime, endTime;
     int dataSize;
     File path;
-    ArrayList<Array2DRowRealMatrix> matriceTable;
-    ArrayList<RealVector> vectorTable;
+    ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<Array2DRowRealMatrix>();
+    ArrayList<ArrayRealVector> vectorTable = new ArrayList<ArrayRealVector>();
     ArrayList<Long> timeStamps = new ArrayList<Long>();// will be written out to CVS later
 
 
@@ -71,23 +73,9 @@ public abstract class Reader {
           */
         while (dataBuff.hasRemaining()) {
             int numRows = dataBuff.getInt();
-            if (numRows == 1) mode = ComposerMode.VECTOR;
-            if (numRows > 1) mode = ComposerMode.MATRIX;
-
-
-            switch (mode) {
-                case VECTOR:
-
-                    vectorTable.add(vectorComposer(dataBuff));
-                    break;
-                case MATRIX:
-                    matriceTable.add(matrixComposer(dataBuff, numRows));
-                    break;
-                default:
-                    vectorTable = null;
-                    matriceTable = null;
-                    break;
-            }
+            if (numRows == 1) vectorComposer(dataBuff);
+            else if (numRows > 1) matrixComposer(dataBuff, numRows);
+            else{break;}
 
         }
 
@@ -97,7 +85,7 @@ public abstract class Reader {
     Efficiency can be improved by using bulk gets in the composer Row or Column-wise
      */
 
-    public Array2DRowRealMatrix matrixComposer(ByteBuffer dataBuff, int numRows){
+    public void matrixComposer(ByteBuffer dataBuff, int numRows){
         /*
         Some kind of lock maybe  required on the ByteBuffer or the file channel. So no other
         method advances the position. Otherwise Absolute gets(index) will be used on the buffer.
@@ -112,7 +100,7 @@ public abstract class Reader {
 
             if (columns<=0){
 
-                return  null;
+                System.exit(1);
 
             }
 
@@ -129,12 +117,14 @@ public abstract class Reader {
         //
         Array2DRowRealMatrix minx = new Array2DRowRealMatrix(backingMatrix);
         timeStamps.add(System.nanoTime());//Object Construction _End Composer end
-        return (minx);
+        this.matriceTable.add(minx);
+        Log.i("Minx", "Added");// just for testing remove afterwards
+
     }
 
 
 
-    public ArrayRealVector vectorComposer (ByteBuffer dataBuff){
+    public void vectorComposer (ByteBuffer dataBuff){
 
         timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
 
@@ -142,7 +132,7 @@ public abstract class Reader {
         int numElements = dataBuff.getInt();
 
         if (numElements<=0){
-            return  null;
+            System.exit(2);
         }
 
         double [] backingVector = new double[numElements];
@@ -156,7 +146,7 @@ public abstract class Reader {
         timeStamps.add(System.nanoTime());//Object Construction _End Composer end
 
 
-        return (vinx);
+        vectorTable.add(vinx);
     }
 
 
@@ -170,6 +160,14 @@ public abstract class Reader {
         }
         csvWriter.writeNext(csvString);
         csvWriter.close();
+    }
+
+    public Array2DRowRealMatrix getFirstMatrix(){
+        return matriceTable.get(1);
+    }
+
+    public ArrayRealVector getFirstVector(){
+        return vectorTable.get(1);
     }
 
 
