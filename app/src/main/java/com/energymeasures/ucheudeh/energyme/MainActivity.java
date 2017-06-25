@@ -50,12 +50,14 @@ public class MainActivity extends AppCompatActivity {
 
         //matrices and vectors are constructed 2exp(x)*2exp(x) entries. matrix and be manually fixed
         // On some devices making this CORE(8), BOARDER, EXTREME, INSANE may not be possible due to
-        // JVM environment limitations. Minimum, Xmx1024M, XX:maxPermSize=512
+        // JVM environment limitations. Minimum, Xmx1024M, XX:maxPermSize=512.
+        //seed array need to generate data groups
+
 
 //for read only block off from this point
 
 
-        ArrayList<int[]> dbank = new ArrayList<int []>(); //holds the
+        ArrayList<int[]> dbank = new ArrayList<int []>(); //holds the test group seed arrays
         dbank.add(new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
         dbank.add(new int[]{5,6,7,8});//largest matrix/vector has 65536 doubles: CORE
         //The following groups are padded with 1s, to give a uniform structure in the read
@@ -94,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             int repeats = 30; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
-            String[] experimentTag = {"dPreamble","dCore"};// ,controll which group is read with tag
+            String[] experimentTag = {"dPreamble","dCore"};// ,control which group is read with tag
             for(String tag: experimentTag)
             experimentRead(context, repeats, tag);//
             cacheCleaner(context);
@@ -250,10 +252,6 @@ public class MainActivity extends AppCompatActivity {
 
         Assumption here is that it is possible to create a Reader without actually reading anything
         Time log begins when the read method is called on the Reader (INTERNAL VALIDATION)
-
-        Do some house keeping here. Force cache dump to storage and clear page cache
-        Force GC :-O will an unrooted phone even allow an application to do this!!!!
-        I doubt it :-/. Well some research need here.
 
          */
         ArrayList<Long> timeStamps = null;
