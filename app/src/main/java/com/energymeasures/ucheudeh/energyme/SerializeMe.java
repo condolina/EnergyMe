@@ -7,7 +7,7 @@ import java.io.IOException;
  */
 
 abstract class SerializeMe {
-    abstract void doRead();
-    abstract String doWrite(SnapshotsBasket jkl) throws IOException;
+    //abstract void readIn();
+    abstract void doWrite(SnapshotsBasket jkl) throws IOException;
 
 }

@@ -5,7 +5,6 @@ import android.util.Log;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealVector;
 
 
 import java.io.File;
@@ -13,11 +12,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 
 import org.msgpack.core.*;
-import org.msgpack.value.*;
 
 
 /**
@@ -36,7 +33,7 @@ public class MsgPSerializer extends SerializeMe {
         this.context= context;
     }
 
-    @Override
+
     void doRead() {
         // full Object read
         String path = "MsgPBasisBig.dat";
@@ -93,28 +90,33 @@ public class MsgPSerializer extends SerializeMe {
 
     }
 
-
+public void write(SnapshotsBasket numData) throws IOException {
+    doWrite(numData);
+    writeIndi(numData);
+}
 
     @Override
-    String doWrite(SnapshotsBasket flk) throws IOException {
+    void doWrite(SnapshotsBasket flk) throws IOException {
 
-        Log.i("MsgPackFLK_firstelement",Double.toString(flk.getAm(0).getEntry(1,1)));
-        String outfile = "MsgPBasisBig.dat";
-        int matrixNumber = flk.getAmSize();
-        int vectorNumber = flk.getsnapshotSize();
+        Log.i("MsgPackFLK_firstelement", Double.toString(flk.getMatrix(0).getEntry(1, 1)));
+        String outfile = "MsgPBasisBig"+flk.getGroupType();
+        int matrixNumber = flk.getNumMatrices();
+        int vectorNumber = flk.getNumVectors();
         MessageBufferPacker msgPk = MessagePack.newDefaultBufferPacker();
         msgPk.packInt(matrixNumber);
         msgPk.packInt(vectorNumber);
 
-        for(Array2DRowRealMatrix matAry: flk.getAm()){
+        // normally in message pack one can define a header marker here for mostly for typeless arrays
+
+        for (Array2DRowRealMatrix matAry : flk.getMatrixElements()) {
             int row = matAry.getRowDimension();
             int column = matAry.getColumnDimension();
 
             //header
             msgPk.packInt(row);
             msgPk.packInt(column);
-            for (int i = 0; i<row;i++){
-                for(int j=0; j<column;j++){
+            for (int i = 0; i < row; i++) {
+                for (int j = 0; j < column; j++) {
                     msgPk.packDouble(matAry.getEntry(i,j));
                 }
             }
@@ -122,10 +124,10 @@ public class MsgPSerializer extends SerializeMe {
 
         }
 
-        for(ArrayRealVector vec: flk.getSnapshot()){
+        for (ArrayRealVector vec : flk.getVectorElements()) {
             int size = vec.getDimension();
             msgPk.packInt(size);
-            for (int r=0; r<size;r++){
+            for (int r = 0; r < size; r++) {
                 msgPk.packDouble(vec.getEntry(r));
             }
 
@@ -136,7 +138,7 @@ public class MsgPSerializer extends SerializeMe {
         msgPk.close();
 
 
-        File out = new File(context.getFilesDir(),outfile);
+        File out = new File(context.getFilesDir(), outfile+".dat");
 
         // Serialize BlockReal matices with message pack and write to file
         // for nio implementation use writeablebytechannel instead of outputstream
@@ -151,12 +153,100 @@ public class MsgPSerializer extends SerializeMe {
 
         } catch (FileNotFoundException e) {
             Log.e("MsgPackFilenotFound", e.toString());
-        }catch (IOException e){
+        } catch (IOException e) {
             Log.e("MsgPackIOexception", e.toString());
         }
-        Log.i("MsgPack Size", Long.toString(out.length()));
+        Log.i("InfoWrite_MsgPack Size_", outfile+"__ "+Long.toString(out.length()));
+    }
 
-        return out.getParent();
+
+        // WRITE INDI FILES next
+
+
+    void writeIndi(SnapshotsBasket numData)throws IOException{
+
+        // a new file per record
+        MessageBufferPacker msgPk = MessagePack.newDefaultBufferPacker();
+        String basename = "MsgPIndi"+numData.getGroupType();
+        int k =0;
+        for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
+            File path = new File ( context.getFilesDir(),basename.concat("m").concat(Integer.toString(k)).concat(".dat"));
+            //e.g. MsgPIndim0.dat
+            int row = matrix.getRowDimension();
+            int column = matrix.getColumnDimension();
+
+            //header
+            msgPk.packInt(row);
+            msgPk.packInt(column);
+            for (int i = 0; i<row;i++){
+                for(int j=0; j<column;j++){
+                    msgPk.packDouble(matrix.getData()[i][j]);
+                }
+            }
+            byte[] buff = msgPk.toByteArray();
+
+            k++;
+            msgPk.flush();
+            msgPk.clear();
+
+            try {
+
+                FileOutputStream fileOut = new FileOutputStream(path);
+
+                fileOut.write(buff);
+
+
+                fileOut.close();
+
+                Log.i("File InfoWrite:FileSize", basename+"m"+k+"-"+Long.toString(path.length()));
+
+            } catch (FileNotFoundException e) {
+                Log.e("MsgPackFilenotFound", e.toString());
+            }catch (IOException e){
+                Log.e("MsgPackIOexception", e.toString());
+            }
+        }
+
+        k =0; // reinitialized
+        for (ArrayRealVector vector : numData.getVectorElements()) {
+            File path = new File ( context.getFilesDir(),basename.concat("v").concat(Integer.toString(k)).concat(".dat"));
+            //e.g. regMappedv0.dat
+
+
+
+
+                //header
+            int size = vector.getDimension();
+            msgPk.packInt(size);
+            for (int r=0; r<size;r++){
+                msgPk.packDouble(vector.toArray()[r]);
+            }
+                byte[] buff = msgPk.toByteArray();
+
+                k++;
+                msgPk.flush();
+                msgPk.clear();
+
+                try {
+
+                    FileOutputStream fileOut = new FileOutputStream(path);
+
+                    fileOut.write(buff);
+
+
+                    fileOut.close();
+
+                    Log.i("File InfoWrite:FileSize", basename+"v"+k+"-"+Long.toString(path.length()));
+
+                } catch (FileNotFoundException e) {
+                    Log.e("MsgPackFilenotFound", e.toString());
+                }catch (IOException e){
+                    Log.e("MsgPackIOexception", e.toString());
+                }
+        }
+        msgPk.close();
     }
 
 }
+
+

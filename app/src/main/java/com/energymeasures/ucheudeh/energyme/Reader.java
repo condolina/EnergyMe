@@ -26,7 +26,7 @@ public abstract class Reader {
     File path;
     ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<Array2DRowRealMatrix>();
     ArrayList<ArrayRealVector> vectorTable = new ArrayList<ArrayRealVector>();
-    ArrayList<Long> timeStamps = new ArrayList<Long>();// will be written out to CVS later
+
 
 
 
@@ -72,12 +72,14 @@ public abstract class Reader {
          identify matrix or vector and calls the appropriate Composer
           */
         while (dataBuff.hasRemaining()) {
+
             int numRows = dataBuff.getInt();
             if (numRows == 1) vectorComposer(dataBuff);
             else if (numRows > 1) matrixComposer(dataBuff, numRows);
             else{break;}
 
         }
+
 
     }
 
@@ -91,7 +93,7 @@ public abstract class Reader {
         method advances the position. Otherwise Absolute gets(index) will be used on the buffer.
          */
 
-        timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
+        //timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
 
 
 
@@ -113,12 +115,12 @@ public abstract class Reader {
                 }
                 //
             }
-        timeStamps.add(System.nanoTime());//backing array End
+        //timeStamps.add(System.nanoTime());//backing array End
         //
         Array2DRowRealMatrix minx = new Array2DRowRealMatrix(backingMatrix);
-        timeStamps.add(System.nanoTime());//Object Construction _End Composer end
+        //timeStamps.add(System.nanoTime());//Object Construction _End Composer end
         this.matriceTable.add(minx);
-        Log.i("Minx", "Added");// just for testing remove afterwards
+        //Log.i("Minx", "Added");// just for testing remove afterwards
 
     }
 
@@ -126,7 +128,7 @@ public abstract class Reader {
 
     public void vectorComposer (ByteBuffer dataBuff){
 
-        timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
+        //timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
 
 
         int numElements = dataBuff.getInt();
@@ -140,27 +142,17 @@ public abstract class Reader {
         for (int w=0; w<numElements;w++){
             backingVector[w] = dataBuff.getDouble();
         }
-        timeStamps.add(System.nanoTime());//backing array End
+        //timeStamps.add(System.nanoTime());//backing array End
         ArrayRealVector vinx = new ArrayRealVector(backingVector);
 
-        timeStamps.add(System.nanoTime());//Object Construction _End Composer end
+        //timeStamps.add(System.nanoTime());//Object Construction _End Composer end
 
 
         vectorTable.add(vinx);
     }
 
 
-     void csvWriter2File() throws IOException {
 
-        CSVWriter csvWriter=new CSVWriter((new FileWriter(path.toString().substring(0,(path.toString().length()-4)).concat("TimeStamps"))));
-
-       String [] csvString = new String[timeStamps.size()];
-        for(int i = 0; i<csvString.length;i++){
-            csvString[i]=timeStamps.get(i).toString();
-        }
-        csvWriter.writeNext(csvString);
-        csvWriter.close();
-    }
 
     public Array2DRowRealMatrix getFirstMatrix(){
         return matriceTable.get(1);

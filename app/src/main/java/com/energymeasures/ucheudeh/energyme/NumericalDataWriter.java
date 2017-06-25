@@ -5,7 +5,6 @@ import android.util.Log;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.BlockRealMatrix;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,7 +30,7 @@ public class NumericalDataWriter {
     final int INT_SIZE = 4;
     final int DOUBLE_SIZE = 8;
     final int LONG_SIZE = 8;
-    final String mode = "Regular_Mapped";
+    String mode = "regMapped";
     Context context;
 
 
@@ -40,28 +39,68 @@ public class NumericalDataWriter {
     public NumericalDataWriter(Context context) throws FileNotFoundException {
         this.context = context;
 
+
     }
 
     void write(SnapshotsBasket numData) throws IOException {
 
-        File path = new File(context.getFilesDir(),"regMapped1.dat");
+        writeBig(numData);
+        writeIndi(numData);
+    }
+
+    void writeBig(SnapshotsBasket numData) throws IOException {
+
+        File path = new File(context.getFilesDir(),mode+"Big"+numData.getGroupType());
         fc = new FileOutputStream(path).getChannel();
 
-        int numMatrix = numData.getAmSize();
-        int numVector = numData.getsnapshotSize();
+        int numMatrix = numData.getNumMatrices();
+        int numVector = numData.getNumVectors();
 
-        for (Array2DRowRealMatrix matrix : numData.getAm()) {
+        for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
             ByteBuffer matrixBuffer = constructMatrix(matrix);
             fc.write(matrixBuffer);
         }
 
-        for (ArrayRealVector vector : numData.getSnapshot()) {
+        for (ArrayRealVector vector : numData.getVectorElements()) {
             ByteBuffer vectorBuffer = constructVector(vector);
             fc.write(vectorBuffer);
         }
-        Log.i("NumericalWriterSize : ", Long.toString(fc.size()));
+        Log.i("eneM FileSize : ", Long.toString(fc.size()));
         fc.close();
 
+
+
+    }
+    void writeIndi(SnapshotsBasket numData)throws IOException{
+
+        // a new file per record
+        String basename = mode+"Indi"+numData.getGroupType();
+        int i =0;
+        for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
+            File path = new File ( context.getFilesDir(),basename.concat("m").concat(Integer.toString(i)).concat(".dat"));
+            //e.g. regMappedm0.dat
+            fc = new FileOutputStream(path).getChannel();// other object gets GC'd
+            ByteBuffer matrixBuffer = constructMatrix(matrix);
+            fc.write(matrixBuffer);
+            fc.close();
+            i++;
+            Log.i("File InfoWrite:FileSize", basename+"m"+i+"-"+Long.toString(path.length()));
+
+        }
+
+        i =0; // reinitialized
+        for (ArrayRealVector vector : numData.getVectorElements()) {
+            File path = new File ( context.getFilesDir(),basename.concat("v").concat(Integer.toString(i)).concat(".dat"));
+            //e.g. regMappedv0.dat
+            fc = new FileOutputStream(path).getChannel();// other object gets GC'd
+            ByteBuffer vectorBuffer = constructVector(vector);
+            fc.write(vectorBuffer);
+            fc.close();
+            i++;
+
+            Log.i("File InfoWrite:FileSize", basename+"v"+i+"-"+Long.toString(path.length()));
+
+        }
 
     }
 

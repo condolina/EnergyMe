@@ -1,5 +1,7 @@
 package com.energymeasures.ucheudeh.energyme;
 
+import android.content.Context;
+import android.content.res.AssetManager;
 import android.util.Log;
 
 import java.io.File;
@@ -9,6 +11,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.Set;
 
 /**
@@ -27,35 +30,39 @@ public class RandomAccessReader extends Reader {
      */
 
     FileChannel fc;
-    ByteBuffer library = null; // read with getLong(int index).Application is indices-aware e.g. via http
+    ByteBuffer library ; // read with getLong(int index).Application is indices-aware e.g. via http
     long libStart; // Start pointer for the Library, set by makeLibrary once
+    Context context;
 
-    public RandomAccessReader(File path) throws IOException {
+    public RandomAccessReader(File path, Context context) throws IOException {
         super(path);
         this.mode = "RandomAccessReader_Reader";
         try {
-            this.fc = new RandomAccessFile(path,"r").getChannel();
 
-            /*
-            Build library
-             */
+            this.fc = new RandomAccessFile(path,"r").getChannel(); // read-only mode
 
-            timeStamps.add(System.nanoTime());//Build library Start
+            //timeStamps.add(System.nanoTime());//Build library Start
 
             long fileSize = fc.size();
             ByteBuffer tailBuffer = getBuffer(8);
-            long markPosition = fileSize - 7;
+            long markPosition = fileSize - 8;
+            fc.position(markPosition);
             fc.read(tailBuffer, (int) markPosition);
             tailBuffer.flip();
             libStart = tailBuffer.getLong();
 
-            long libSize = (markPosition - libStart);
+            long libSize = (markPosition - libStart); // Hey... the size of the library
             library = getBuffer((int) libSize);
 
             fc.read(library, libStart);
             library.flip();
+            long firstBuff = library.asLongBuffer().get(2);//Just for test
+            Log.i("Library Ready. Bytes:", Long.toString(library.capacity()));//test
 
-            timeStamps.add(System.nanoTime());//Build Library End
+
+            // LIBRARY NOW part of this RandomAccessReader.
+
+            //timeStamps.add(System.nanoTime());//Build Library End
 
         } catch (FileNotFoundException e) {
             Log.e(this.mode," : "+ e.toString());
@@ -69,7 +76,7 @@ public class RandomAccessReader extends Reader {
         EARLY_FETCH,LATE_FETCH
     }
 
-    public void read(Set <Integer> bringList, ReadMode fetch ) throws IOException {
+    public void read(int[] bringList, ReadMode fetch ) throws IOException {
 
          /*
         Assumption here is that it is possible to create a Reader without actually reading anything
@@ -80,8 +87,10 @@ public class RandomAccessReader extends Reader {
 
          */
 
+        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
-       timeStamps.add(System.nanoTime());
+
+       //timeStamps.add(System.nanoTime());
 
 
 
@@ -106,14 +115,14 @@ public class RandomAccessReader extends Reader {
 
 
 
-       timeStamps.add(System.nanoTime());
+       //timeStamps.add(System.nanoTime());
         /*
         TODO: Send Stop Trigger to power tool
 
          */
 
-        //Read current timeStamps and append to CVS file next line at the same time reset time to 0.
-        csvWriter2File();
+        //Read current //timeStamps and append to CVS file next line at the same time reset time to 0.
+
 
 
 
@@ -123,7 +132,7 @@ public class RandomAccessReader extends Reader {
 
         /*
         This method is the method called after creating the randomAccess object.
-        It iterates the Set, picks an integer index of the desired structure as pre-known from a
+        It iterates the List, picks an integer index of the desired structure as pre-known from
         e.g. http sperate message regarding the content of this file. So the applicaition knows the
         index of each vector or matrix
 
@@ -135,16 +144,6 @@ public class RandomAccessReader extends Reader {
         The second: early pull, puts the entire file in memory and grants the request for specific
         structure from the Buffer in memory. Here there will be buffer copying each time structures
         are requested each with the bringList.
-
-        Read(File path,Set<Integer> bringList) as abstract  and implemented by RandomAccessReader.
-        Other readers return null to this method in their implentation. This read calls ReadIn with
-        ByteBuffer for each element
-        The method
-        -picks one element of this set which reflects what the application needs at the
-        moment,
-        -looks up the start index on the library buffer, an uses the size detail to create byte buffer
-        - (fills the buffer with bytes from the start index+1 and returns to the read method.
-        -retr
          */
 
 
@@ -153,18 +152,22 @@ public class RandomAccessReader extends Reader {
 
     // Overloaded method EARLY RANDOM ACCESS READ
     // ReadMode in the parameter serves just to overload the method
-    void readIn(Set <Integer> bringList, ReadMode fetch) throws IOException, FileNotFoundException {
+    void readIn(int[] bringList, ReadMode fetch) throws IOException, FileNotFoundException {
+
 
 
         /*
         Make buffer to load the entire data area of the File
          */
-        timeStamps.add(System.nanoTime());//Allocate Buffer_Start
-        ByteBuffer fileBuffer = ByteBuffer.allocate((int)libStart-1);
-        timeStamps.add(System.nanoTime());//Allocate  Buffer_End/ Read File-Start
+        //timeStamps.add(System.nanoTime());//Allocate Buffer_Start
+        //ByteBuffer fileBuffer = ByteBuffer.allocate((int)libStart-1);
+        ByteBuffer fileBuffer = ByteBuffer.allocate((int)fc.size());
+        //timeStamps.add(System.nanoTime());//Allocate  Buffer_End/ Read File-Start
+
+        fc.position(0);//return filepointer to the start of file
         fc.read(fileBuffer);
         fileBuffer.flip();
-        timeStamps.add(System.nanoTime());//Main Buffer filled
+        //timeStamps.add(System.nanoTime());//Main Buffer filled
 
         queueRequest(bringList, fileBuffer);
     }
@@ -172,7 +175,7 @@ public class RandomAccessReader extends Reader {
 
 
     // Overloaded method LAZY RANDOM ACCESS READ
-    void readIn(Set <Integer> bringList) throws IOException, FileNotFoundException {
+    void readIn(int [] bringList) throws IOException, FileNotFoundException {
 
         queueRequest(bringList);
 
@@ -180,42 +183,50 @@ public class RandomAccessReader extends Reader {
 
 
 
-    private void queueRequest(Set<Integer> bringList) throws IOException {
+    private void queueRequest(int[] bringList) throws IOException {
 
         /*
-        The library holds a pointer to the start of the data, and the size of the needed buffer to
+        USAGE: The library holds a pointer to the start of the data, and the size of the needed buffer to
         get this Numerical data. Pointer is located at (2*index-2), while the size : (2*index-1).
+        bringList has no index 0, must start from 1.
          */
-        for(Integer index: bringList){
+        for(int index: bringList){
 
-            timeStamps.add(System.nanoTime());//Allocate Buffer for single record_Start
-            long pointer =  library.getLong(2*index-2);
-            int bufferSize = (int)library.getLong(2*index-1);
+            //timeStamps.add(System.nanoTime());//Allocate Buffer for single record_Start
+            if(index == 0)index=1;// incase user forgets. Kostenlos :-)
+            long pointer =  library.asLongBuffer().get(2*index-2);
+            int bufferSize = (int)library.asLongBuffer().get(2*index-1);
             ByteBuffer dataBuff = ByteBuffer.allocate(bufferSize);
-            timeStamps.add(System.nanoTime());//Allocate Buffer for Single record_ end/Fill buffer_S
+            //timeStamps.add(System.nanoTime());//Allocate Buffer for Single record_ end/Fill buffer_S
             fc.read(dataBuff,pointer);
-            timeStamps.add(System.nanoTime());//Read record to buffer_end
+            //timeStamps.add(System.nanoTime());//Read record to buffer_end
 
             dataBuff.flip();
 
-            timeStamps.add(System.nanoTime());//Buffer for record Ready
+            //timeStamps.add(System.nanoTime());//Buffer for record Ready
 
             composerFactory(dataBuff);
         }
     }
 
-    private void queueRequest(Set<Integer> bringList, ByteBuffer fileBuffer){
-        for(Integer index: bringList){
-            timeStamps.add(System.nanoTime());//Fill buffer for one record_Start
-            long pointer =  library.getLong(2*index-2);
-            int bufferSize = (int)library.getLong(2*index-1);
+    private void queueRequest(int [] bringList, ByteBuffer fileBuffer){
+        for(int index: bringList){
+            if(index == 0)index=1;
+            //timeStamps.add(System.nanoTime());//Fill buffer for one record_Start
+            long pointer =  library.asLongBuffer().get(2*index-2);
+            int bufferSize = (int)library.asLongBuffer().get(2*index-1);
             byte [] dataArray = new byte[bufferSize];
             fileBuffer.position((int)pointer);
             fileBuffer.get(dataArray,0,dataArray.length);
             ByteBuffer dataBuff = ByteBuffer.wrap(dataArray);
+            //ByteBuffer dataBuff = ByteBuffer.allocate(bufferSize);
+            //for (int i=0; i<bufferSize+pointer;i++){
+            //    dataBuff.put(fileBuffer.get((int)pointer+i));
 
-            dataBuff.flip();
-            timeStamps.add(System.nanoTime());//Buffer ready
+            //}
+
+            //dataBuff.flip();
+            //timeStamps.add(System.nanoTime());//Buffer ready
 
             composerFactory(dataBuff);
         }
