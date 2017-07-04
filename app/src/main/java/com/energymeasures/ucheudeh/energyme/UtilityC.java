@@ -24,7 +24,7 @@ class UtilityC {
 
 
         });
-        Log.d("FirstElement", Double.toString(aMatrix.getEntry(1,1)));
+        //Log.d("FirstElement", Double.toString(aMatrix.getEntry(1,1)));
         return aMatrix;
     }
 
@@ -38,7 +38,7 @@ class UtilityC {
 
 
         });
-        Log.d("FirstElement", Double.toString(aVector.getEntry(1)));
+        //Log.d("FirstElement", Double.toString(aVector.getEntry(1)));
         return aVector;
     }
 

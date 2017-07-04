@@ -48,7 +48,7 @@ public class MappedReader extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
 
         //timeStamps.add(System.nanoTime());
@@ -79,12 +79,6 @@ public class MappedReader extends Reader {
 
         MappedByteBuffer dataBuff = fc.map(FileChannel.MapMode.READ_ONLY,0,fc.size());
 
-
-        //MappedByteBuffer dataBuff = fc.map(FileChannel.MapMode.READ_ONLY,INT_LENGHT,fc.size()-INT_LENGHT);
-
-        //timeStamps.add(System.nanoTime());//end file mapping Buffer Ready for extraction
-
-       // dataBuff.flip();
         composerFactory(dataBuff);
     }
 }

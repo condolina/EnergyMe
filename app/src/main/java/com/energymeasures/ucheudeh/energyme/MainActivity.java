@@ -10,20 +10,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 
+
 import com.opencsv.CSVWriter;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
 
     SnapshotsBasket numData;
-    CSVWriter results;
+
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = new String[]{
             Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -60,11 +59,10 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<int[]> dbank = new ArrayList<int []>(); //holds the test group seed arrays
         dbank.add(new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
         dbank.add(new int[]{5,6,7,8});//largest matrix/vector has 65536 doubles: CORE
-        //The following groups are padded with 1s, to give a uniform structure in the read
-
-        //dbank.add(new int[]{1,1,9,10});//largest matrix/vector has 1048576 doubles : BOARDER
-        //dbank.add(new int[]{1,1,11,12});//largest matrix/vector has 16777216 doubles : EXTREME
-       // dbank.add(new int[]{1,1,1,13});//largest matrix/vector has 671108864 doubles : INSANE
+        //The following groups are padded with 1s, to give a uniform structure in the "big" read
+        dbank.add(new int[]{1,1,9,10});//largest matrix/vector has 1048576 doubles : BOARDER
+        dbank.add(new int[]{1,1,11,12});//largest matrix/vector has 16777216 doubles : EXTREME
+        dbank.add(new int[]{1,1,1,13});//largest matrix/vector has 671108864 doubles : INSANE
 
 
 
@@ -91,10 +89,10 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
+/*
 
         try {
-            int repeats = 30; // number of read repeats
+            int repeats = 50; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
             String[] experimentTag = {"dPreamble","dCore"};// ,control which group is read with tag
             for(String tag: experimentTag)
@@ -105,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
+*/
 
 
     }
@@ -143,6 +141,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void experimentWrite(Context context, SnapshotsBasket numData) throws IOException {
         // Run Once, create all files from the same SnapshotsBasket (Same Matrices and Arrays)
+        /*
+        NOTE: Write durations are not absolute. System.nanotime has a poor granularity/resolution of
+        25 -30nS at best, and up to 15118nS. There is also an associated latency of nearly the same
+        ranges. Depending on the hardware and OS. So best to determine granularity and latency for
+        this platform. Will be done separately. Needless to mention that logs also have associated
+        latencies, hence logs are elminated for the final tests.
+        (ref: https://shipilev.net/blog/2014/nanotrusting-nanotime/#_granularity).
+         */
 
 
         //eneM: Simple and MMAP Test Files Big and Indi Files
@@ -242,10 +248,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         }
-        results = new CSVWriter(new FileWriter(file));
-        String [] headers = ("EnerMeREADTBig#jSerBigFile#msgPBigRead#" +
-                "EnerMeRMmapBigFile#EnerMeREADTImeIndi#jSerIndiFile#msgPIndiFile#" +
-                "eneM_Rnd_Proactv#eneM_Rnd_Lazy#eneM_Mmap_Rnd_Early#eneM_Mmap_Rnd_Lazy").split("#");
+        CSVWriter results = new CSVWriter(new FileWriter(file));
+        ArrayList<String> headerCan = new ArrayList<String>();
+        String [] headers = ("###" +
+                "#EnerMeREADTImeIndi#jSerIndiFile#msgPIndiFile#" +
+                "##").split("#");
         results.writeNext(headers);
 
         /*
@@ -260,42 +267,35 @@ public class MainActivity extends AppCompatActivity {
              timeStamps = new ArrayList<Long>();// will be written out to CVS later
 
             // eneM Single File Simple
-            timeStamps.add(Long.valueOf(callReadeneMBig(context,tag)));
+            timeStamps.add(Long.valueOf(callReadeneMBig(context,tag,headerCan)));
 
             // jSer read Single File
-            timeStamps.add(Long.valueOf(callReadjSerBig(context,tag)));
+            timeStamps.add(Long.valueOf(callReadjSerBig(context,tag,headerCan)));
 
             // msgP Single File
-            timeStamps.add(Long.valueOf(callReadmsgPBig(context,tag)));
+            timeStamps.add(Long.valueOf(callReadmsgPBig(context,tag,headerCan)));
 
             //eneM MMap Single File
-            timeStamps.add(Long.valueOf(callReadeneMMap(context,tag)));
+            timeStamps.add(Long.valueOf(callReadeneMMap(context,tag,headerCan)));
 
 
             // eneM Indi
-            timeStamps.add(Long.valueOf(callReadeneMIndi(context,tag)));
+            timeStamps.addAll(callReadeneMIndi(context,tag,headerCan));
 
             // jSer Indi
-            timeStamps.add(Long.valueOf(callReadjSerIndi(context,tag)));
+            timeStamps.addAll(callReadjSerIndi(context,tag,headerCan));
 
             // msgP Indi Files
-            timeStamps.add(Long.valueOf(callReadmsgPIndi(context,tag)));
+            timeStamps.addAll(callReadmsgPIndi(context,tag,headerCan));
 
             //eneM Random Proactive
-            timeStamps.add(Long.valueOf(callReadeneMRndEarly(context,tag)));
+            timeStamps.add(Long.valueOf(callReadeneMRndEarly(context,tag,headerCan)));
 
             // eneM Random Lazy
-            timeStamps.add(Long.valueOf(callReadeneMRndLate(context,tag)));
+            timeStamps.add(Long.valueOf(callReadeneMRndLate(context,tag,headerCan)));
 
-
-
-
-
-
-
-
-
-
+            //eneM Random with MMap - Lazy Only
+            timeStamps.add(Long.valueOf(callReadeneMRndLateMmap(context,tag,headerCan)));
 
 
 
@@ -311,24 +311,34 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private long callReadmsgPIndi(Context context, String tag) throws IOException {
+    private ArrayList<Long> callReadmsgPIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         cacheCleaner(context);
         long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"MsgPBasisBig"+tag+".dat");// Ignored in actual method
 
         MsgPReaderIndiFile msgPIndi = new MsgPReaderIndiFile(path);
 
-        msgPIndi.read(context,"MsgPIndi"+tag);
+        // we are reading 4 matrices and 4 vectors files, we add the headers for CVS. First m then v
 
-        long endtime = System.nanoTime();
-        long duration = endtime-starttime;
-        Log.i("msgPIndiFile         - ",Long.toString(duration));
+        // timing for each file read happens in the actual reader (read() method)
+        for (int i = 0; i<4; i++){
+            headerCan.add("MsgPIndi"+tag+"m"+Integer.toString(i));//add matrix header
+        }
+        for (int i = 0; i<4; i++){
+            headerCan.add("MsgPIndi"+tag+"v"+Integer.toString(i));//add vector header
+        }
+
+        ArrayList<Long> duration = msgPIndi.read(context,"MsgPIndi"+tag);
+
+       // long endtime = System.nanoTime();
+        //long duration = endtime-starttime;
+        //Log.i("msgPIndiFile         - ",Long.toString(duration));
         return duration;
 
     }
 
-    private long callReadmsgPBig(Context context, String tag) throws IOException {
-
+    private long callReadmsgPBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
+        headerCan.add("msgPBigRead");
         cacheCleaner(context);
         long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"MsgPBasisBig"+tag+".dat");
@@ -343,24 +353,35 @@ public class MainActivity extends AppCompatActivity {
         return duration;
     }
 
-    private long callReadjSerIndi(Context context, String tag) throws IOException {
+    private ArrayList<Long> callReadjSerIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         cacheCleaner(context);
         long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"jSerBig"+tag+".dat");// Ignored in actual method
 
         JReaderIndiFile jSerRIndi = new JReaderIndiFile(path);
 
-        jSerRIndi.read(context,"jSerIndi"+tag);
+        // we are reading 4 matrices and 4 vectors files, we add the headers for CVS. First m then v
 
-        long endtime = System.nanoTime();
-        long duration = endtime-starttime;
-        Log.i("jSerIndiFile         - ", Long.toString(duration));
+        // timing for each file read happens in the actual reader (read() method)
+        for (int i = 0; i<4; i++){
+            headerCan.add("jSerIndi"+tag+"m"+Integer.toString(i));//add matrix header
+        }
+        for (int i = 0; i<4; i++){
+            headerCan.add("jSerIndi"+tag+"v"+Integer.toString(i));//add vector header
+        }
+
+        ArrayList<Long> duration = jSerRIndi.read(context,"jSerIndi"+tag);
+
+        //long endtime = System.nanoTime();
+        //long duration = endtime-starttime;
+        //Log.i("jSerIndiFile         - ", Long.toString(duration));
         return duration;
 
     }
 
-    private long callReadjSerBig(Context context, String tag) throws IOException {
+    private long callReadjSerBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         cacheCleaner(context);
+        headerCan.add("jSerBigFile");
         long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"jSerBig"+tag+".dat");
 
@@ -376,7 +397,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private long callReadeneMMap(Context context, String tag) throws IOException {
+    private long callReadeneMMap(Context context, String tag, ArrayList<String> headerCan) throws IOException {
+        headerCan.add("EnerMeRMmapBigFile");
         cacheCleaner(context);
         long eMeRStime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
@@ -392,12 +414,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private long callReadeneMRndLate(Context context, String tag) throws IOException {
+    private long callReadeneMRndLate(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         /*
         The Random access read will fetch 3 matrix from the file to the application heap.
         Read can be called several times on the reader object for this RNDaccesReader. I think this
         is a better use case than asking for all records in the file.
          */
+        headerCan.add("eneM_Rnd_Lazy");
         cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndtime = System.nanoTime();
@@ -412,7 +435,8 @@ public class MainActivity extends AppCompatActivity {
         return duration;
     }
 
-    private long callReadeneMRndEarly(Context context, String tag) throws IOException {
+    private long callReadeneMRndEarly(Context context, String tag, ArrayList<String> headerCan) throws IOException {
+        headerCan.add("eneM_Rnd_Proactv");
         cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndtime = System.nanoTime();
@@ -426,22 +450,53 @@ public class MainActivity extends AppCompatActivity {
         return duration;
     }
 
-    private long callReadeneMIndi(Context context, String tag) throws IOException {
+    private long callReadeneMRndLateMmap(Context context, String tag, ArrayList<String> headerCan) throws IOException {
+        /*
+        The Random access read will fetch 3 matrix from the file to the application heap.
+        Read can be called several times on the reader object for this RNDaccesReader. I think this
+        is a better use case than asking for all records in the file.
+         */
+        headerCan.add("eneM_Mmap_Rnd_Lazy");
+        cacheCleaner(context);
+        int [] bringList = new int[]{3,0,2};
+        long eMeRSRndMmaptime = System.nanoTime();
+        File pathRnd = new File (context.getFilesDir(),"eneMRnd"+tag+".dat");
+        MMapRandomAccessReader eneRndLateMmap = new MMapRandomAccessReader(pathRnd,context);
+        eneRndLateMmap.read(bringList);
+
+        //Log.i("Element Val -",Double.toString(eneRnd.vectorTable.get(1).getEntry(20)));
+        long eMeRERndMmaptime = System.nanoTime();
+        long duration = eMeRERndMmaptime-eMeRSRndMmaptime;
+        Log.i("EnerMeREADTImeRndMMAP- ", Long.toString(duration));
+        return duration;
+    }
+
+    private ArrayList<Long> callReadeneMIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         cacheCleaner(context);
         long eMeRSInditime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
 
         SimpleReader regMapRIndi = new SimpleReader(path);// same path as above but not needed
-        regMapRIndi.read(context,"regMappedIndi"+tag);
+        // we are reading 4 matrices and 4 vectors files, we add the headers for CVS. First m then v
 
-        long eMeREInditime = System.nanoTime();
-        long duration = eMeREInditime-eMeRSInditime;
-        Log.i("EnerMeREADTImeIndi   - ", Long.toString(duration));
+        // timing for each file read happens in the actual reader (read() method)
+        for (int i = 0; i<4; i++){
+            headerCan.add("regMappedIndi"+tag+"m"+Integer.toString(i));//add matrix header
+        }
+        for (int i = 0; i<4; i++){
+            headerCan.add("regMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
+        }
+        ArrayList <Long> duration = regMapRIndi.read(context,"regMappedIndi"+tag);
+
+        //long eMeREInditime = System.nanoTime();
+       // long duration = eMeREInditime-eMeRSInditime;
+        //Log.i("EnerMeREADTImeIndi   - ", Long.toString(duration));
         return duration;
     }
 
-    private long callReadeneMBig(Context context, String tag) throws IOException {
+    private long callReadeneMBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         cacheCleaner(context);
+        headerCan.add("EnerMeREADTBig");
         long eMeRStime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
 

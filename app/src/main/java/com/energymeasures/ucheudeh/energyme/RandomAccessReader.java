@@ -57,7 +57,7 @@ public class RandomAccessReader extends Reader {
             fc.read(library, libStart);
             library.flip();
             long firstBuff = library.asLongBuffer().get(2);//Just for test
-            Log.i("Library Ready. Bytes:", Long.toString(library.capacity()));//test
+            //Log.i("Library Ready. Bytes:", Long.toString(library.capacity()));//test
 
 
             // LIBRARY NOW part of this RandomAccessReader.
@@ -87,7 +87,7 @@ public class RandomAccessReader extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
 
        //timeStamps.add(System.nanoTime());
@@ -96,12 +96,12 @@ public class RandomAccessReader extends Reader {
 
         switch (fetch){
 
-            case EARLY_FETCH:
+            case LATE_FETCH:
 
                 readIn(bringList);
                 break;
 
-            case LATE_FETCH:
+            case EARLY_FETCH:
 
                 readIn(bringList,fetch);
                 break;
@@ -182,7 +182,7 @@ public class RandomAccessReader extends Reader {
     }
 
 
-
+// Lazy reader queueRequest
     private void queueRequest(int[] bringList) throws IOException {
 
         /*
@@ -208,7 +208,7 @@ public class RandomAccessReader extends Reader {
             composerFactory(dataBuff);
         }
     }
-
+// Early reader queue>Request
     private void queueRequest(int [] bringList, ByteBuffer fileBuffer){
         for(int index: bringList){
             if(index == 0)index=1;

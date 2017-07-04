@@ -44,7 +44,7 @@ public class JReaderSingle extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
         // endTime in main activity
 

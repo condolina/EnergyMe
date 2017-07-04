@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.ArrayList;
 
 /**
  * Created by ucheudeh on 6/18/17.
@@ -22,7 +23,7 @@ public class JReaderIndiFile extends Reader {
         super(path);// semantics for path should be a list of Files for each record. Will be fixed.
     }
 
-    public void read(Context context, String basename)throws IOException, FileNotFoundException {
+    public ArrayList<Long> read(Context context, String basename)throws IOException, FileNotFoundException {
 
 
         /*
@@ -34,7 +35,7 @@ public class JReaderIndiFile extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
         // endTime in main activity
 
@@ -43,7 +44,7 @@ public class JReaderIndiFile extends Reader {
 
 
 
-        readIn(context, basename);
+        ArrayList<Long> duration = readIn(context, basename);
 
 
         //timeStamps.add(System.nanoTime());
@@ -54,13 +55,14 @@ public class JReaderIndiFile extends Reader {
         csvWriter2File();
          */
 
-        Log.i("JReadr First element : ",Double.toString(this.getFirstMatrix().getEntry(1,1)));
+        //Log.i("JReadr First element : ",Double.toString(this.getFirstMatrix().getEntry(1,1)));
 
 
-
+        return duration;
     }
 
-    private void readIn(Context context, String basename) {
+    private ArrayList<Long> readIn(Context context, String basename) {
+        ArrayList<Long> durations = new ArrayList<Long>();
         // read the multiple file version of the snapshots: numData. Each record is saved in a Single file
 
         //USAGE for basename: basename[m or v][x], e.g Basisfilem1.dat, Basisfilev1.dat.
@@ -80,11 +82,13 @@ public class JReaderIndiFile extends Reader {
             //Log.i("File InfoRead", "BasisSingle"+Integer.toString(i).concat("-").concat(Long.toString(multiFile.length())));
             try {
                 ObjectInputStream in2 = new ObjectInputStream(context.openFileInput(filename));
+                Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
                 Array2DRowRealMatrix blk = new Array2DRowRealMatrix((double [][]) in2.readObject());
                 matriceTable.add(blk);
                 //Log the first element of each array
-                Log.i("First Elements"+Integer.toString(i), Double.toString(blk.getEntry(1,1)));
+                //Log.i("First Elements"+Integer.toString(i), Double.toString(blk.getEntry(1,1)));
                 in2.close();
+                durations.add(Long.valueOf(System.nanoTime()-startTime));
             } catch (FileNotFoundException e) {
 
                 Log.e("EnergyMeIO", e.toString());
@@ -106,11 +110,13 @@ public class JReaderIndiFile extends Reader {
             //Log.i("File InfoRead", "BasisSingle"+Integer.toString(i).concat("-").concat(Long.toString(multiFile.length())));
             try {
                 ObjectInputStream in2 = new ObjectInputStream(context.openFileInput(filename));
+                Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
                 ArrayRealVector vec = new ArrayRealVector((double[]) in2.readObject());
                 vectorTable.add(vec);
                 //Log the first element of each array
-                Log.i("First Elements"+Integer.toString(i), Double.toString(vec.getEntry(1)));
+                //Log.i("First Elements"+Integer.toString(i), Double.toString(vec.getEntry(1)));
                 in2.close();
+                durations.add(Long.valueOf(System.nanoTime()-startTime));
             } catch (FileNotFoundException e) {
 
                 Log.e("EnergyMeIO", e.toString());
@@ -122,6 +128,7 @@ public class JReaderIndiFile extends Reader {
             }
 
         }
+        return durations;
     }
 
     }

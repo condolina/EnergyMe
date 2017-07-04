@@ -92,7 +92,7 @@ public class MsgPSerializer extends SerializeMe {
 
 public void write(SnapshotsBasket numData) throws IOException {
     doWrite(numData);
-    writeIndi(numData);
+   // writeIndi(numData);
 }
 
     @Override
@@ -185,7 +185,7 @@ public void write(SnapshotsBasket numData) throws IOException {
             }
             byte[] buff = msgPk.toByteArray();
 
-            k++;
+
             msgPk.flush();
             msgPk.clear();
 
@@ -205,6 +205,7 @@ public void write(SnapshotsBasket numData) throws IOException {
             }catch (IOException e){
                 Log.e("MsgPackIOexception", e.toString());
             }
+            k++;
         }
 
         k =0; // reinitialized

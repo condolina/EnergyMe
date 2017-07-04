@@ -27,7 +27,7 @@ public class MsgPReaderIndiFile extends Reader {
         super(path);
     }
 
-    public void read(Context context, String basename) throws IOException, FileNotFoundException {
+    public ArrayList<Long> read(Context context, String basename) throws IOException, FileNotFoundException {
 
 
         /*
@@ -39,7 +39,7 @@ public class MsgPReaderIndiFile extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
         // endTime in main activity
 
@@ -47,7 +47,7 @@ public class MsgPReaderIndiFile extends Reader {
         //timeStamps.add(System.nanoTime());
 
 
-        readIn(context, basename);
+        ArrayList<Long> duration = readIn(context, basename);
 
 
         //timeStamps.add(System.nanoTime());
@@ -59,11 +59,13 @@ public class MsgPReaderIndiFile extends Reader {
          */
 
         //Log.i("msgPInd FirstElement : ", Double.toString(this.getFirstMatrix().getEntry(1, 1)));
+        return duration;
 
 
     }
 
-    private void readIn(Context context, String basename) throws IOException {
+    private ArrayList<Long> readIn(Context context, String basename) throws IOException {
+        ArrayList<Long> durations = new ArrayList<Long>();
         // read the multiple file version of the snapshots: numData. Each record is saved in a Single file
 
         //USAGE for basename: basename[m or v][x], e.g msgPBasisfilem1.dat, msgPBasisfilev1.dat.
@@ -85,10 +87,11 @@ public class MsgPReaderIndiFile extends Reader {
             try {
                 FileInputStream in = context.openFileInput(filename);
                 // a more reliable io method will be better e.g Java.nio
+                Long startTime = System.nanoTime();
                 int fileSize = in.available();
-                byte[] inBuff = new byte[fileSize];
-                in.read(inBuff, 0, fileSize);
-                unMsgPk = MessagePack.newDefaultUnpacker(inBuff);
+                byte[] inBuff = new byte[fileSize]; // buffer size change here
+                in.read(inBuff, 0, fileSize);//in fairness read entire file into buffer in memory
+                unMsgPk = MessagePack.newDefaultUnpacker(inBuff); // unpacker has own buffer 8k
 
                 in.close();
 
@@ -102,6 +105,8 @@ public class MsgPReaderIndiFile extends Reader {
                     }
                 }
                 matriceTable.add(new Array2DRowRealMatrix(root));
+                unMsgPk.close();
+                durations.add(Long.valueOf(System.nanoTime()-startTime));
 
             } catch (IOException e) {
                 // TODO: optimisation make a tag string object that is passed to all log entry for message pack
@@ -115,6 +120,7 @@ public class MsgPReaderIndiFile extends Reader {
             try {
                 FileInputStream in = context.openFileInput(filename);
                 // a more reliable io method will be better e.g Java.nio
+                Long startTime = System.nanoTime();
                 int fileSize = in.available();
                 byte[] inBuff2 = new byte[fileSize];
                 in.read(inBuff2, 0, fileSize);
@@ -128,6 +134,8 @@ public class MsgPReaderIndiFile extends Reader {
                         rootVector[z] = unMsgPk.unpackDouble();
                     }
                     vectorTable.add(new ArrayRealVector(rootVector));
+                unMsgPk.close();
+                durations.add(Long.valueOf(System.nanoTime()-startTime));
 
 
             } catch (IOException e) {
@@ -143,6 +151,7 @@ public class MsgPReaderIndiFile extends Reader {
 
         }
 
+        return durations;
     }
 
 }

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 
 /**
  * Created by ucheudeh on 6/11/17. Java NIO is considered more efficient than Java IO. As such we
@@ -45,7 +46,7 @@ class SimpleReader extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
 
         //timeStamps.add(System.nanoTime());
@@ -91,7 +92,8 @@ class SimpleReader extends Reader {
 
     }
 
-    public void read(Context context, String basename)throws IOException, FileNotFoundException {
+    public ArrayList<Long> read(Context context, String basename)throws IOException, FileNotFoundException {
+        ArrayList<Long> durations = new ArrayList<Long>();
 
 
         /*
@@ -105,20 +107,24 @@ class SimpleReader extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //.
 
 
         //timeStamps.add(System.nanoTime());
         for(int i = 0; i<4;i++){
             String filename = basename.concat("m").concat(Integer.toString(i)).concat(".dat");//Basisfilem1.dat
-            fc = context.openFileInput(filename).getChannel();
+            fc = context.openFileInput(filename).getChannel();//here open() is executed
+            Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             readIn();
+            durations.add(Long.valueOf(System.nanoTime()-startTime));
         }
 
         for(int i = 0; i<4;i++){
             String filename = basename.concat("v").concat(Integer.toString(i)).concat(".dat");//Basisfilem1.dat
             fc = context.openFileInput(filename).getChannel();
+            Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             readIn();
+            durations.add(Long.valueOf(System.nanoTime()-startTime));
         }
 
 
@@ -136,8 +142,10 @@ class SimpleReader extends Reader {
          */
 
         //Log.i("EneM First element : ",Double.toString(this.getFirstMatrix().getEntry(1,1)));
+        // Convert Long arraylist to String Array
 
 
 
+        return durations;
     }
 }

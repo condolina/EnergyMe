@@ -34,7 +34,7 @@ public class MsgPReader extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
 
         //timeStamps.add(System.nanoTime());
