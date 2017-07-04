@@ -7,10 +7,11 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+
+import static java.lang.System.nanoTime;
 
 /**
  * Created by ucheudeh on 6/18/17.
@@ -18,12 +19,12 @@ import java.util.ArrayList;
  * This Object will read 4 file each for matrice and vectors with each object presaved to one file
  */
 
-public class JReaderIndiFile extends Reader {
-    public JReaderIndiFile(File path) throws IOException {
+class JReaderIndiFile extends Reader {
+    JReaderIndiFile(File path) throws IOException {
         super(path);// semantics for path should be a list of Files for each record. Will be fixed.
     }
 
-    public ArrayList<Long> read(Context context, String basename)throws IOException, FileNotFoundException {
+    public ArrayList<Long> read(Context context, String basename)throws IOException {
 
 
         /*
@@ -35,24 +36,18 @@ public class JReaderIndiFile extends Reader {
 
          */
 
-        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
-
-        // endTime in main activity
-
-
-        //timeStamps.add(System.nanoTime());
 
 
 
-        ArrayList<Long> duration = readIn(context, basename);
+
+        ArrayList<Long> duration = readIn(context, basename);// Structure to allow finer power measure
 
 
-        //timeStamps.add(System.nanoTime());
+
         /*
         TODO: Send Stop Trigger to power tool
 
-        norm the CVSWriter for now
-        csvWriter2File();
+
          */
 
         //Log.i("JReadr First element : ",Double.toString(this.getFirstMatrix().getEntry(1,1)));
@@ -62,7 +57,7 @@ public class JReaderIndiFile extends Reader {
     }
 
     private ArrayList<Long> readIn(Context context, String basename) {
-        ArrayList<Long> durations = new ArrayList<Long>();
+        ArrayList<Long> durations = new ArrayList<>();
         // read the multiple file version of the snapshots: numData. Each record is saved in a Single file
 
         //USAGE for basename: basename[m or v][x], e.g Basisfilem1.dat, Basisfilev1.dat.
@@ -82,20 +77,15 @@ public class JReaderIndiFile extends Reader {
             //Log.i("File InfoRead", "BasisSingle"+Integer.toString(i).concat("-").concat(Long.toString(multiFile.length())));
             try {
                 ObjectInputStream in2 = new ObjectInputStream(context.openFileInput(filename));
-                Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
+                Long startTime = nanoTime();//here b4 readIn(). Not measuring open().
                 Array2DRowRealMatrix blk = new Array2DRowRealMatrix((double [][]) in2.readObject());
                 matriceTable.add(blk);
                 //Log the first element of each array
                 //Log.i("First Elements"+Integer.toString(i), Double.toString(blk.getEntry(1,1)));
                 in2.close();
-                durations.add(Long.valueOf(System.nanoTime()-startTime));
-            } catch (FileNotFoundException e) {
+                durations.add(nanoTime() - startTime);
+            } catch (ClassNotFoundException | IOException e) {
 
-                Log.e("EnergyMeIO", e.toString());
-            } catch (IOException e) {
-
-                Log.e("EnergyMeIO", e.toString());
-            } catch (ClassNotFoundException e) {
                 Log.e("EnergyMeIO", e.toString());
             }
 
@@ -110,20 +100,15 @@ public class JReaderIndiFile extends Reader {
             //Log.i("File InfoRead", "BasisSingle"+Integer.toString(i).concat("-").concat(Long.toString(multiFile.length())));
             try {
                 ObjectInputStream in2 = new ObjectInputStream(context.openFileInput(filename));
-                Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
+                Long startTime = nanoTime();//here b4 readIn(). Not measuring open().
                 ArrayRealVector vec = new ArrayRealVector((double[]) in2.readObject());
                 vectorTable.add(vec);
                 //Log the first element of each array
                 //Log.i("First Elements"+Integer.toString(i), Double.toString(vec.getEntry(1)));
                 in2.close();
-                durations.add(Long.valueOf(System.nanoTime()-startTime));
-            } catch (FileNotFoundException e) {
+                durations.add(nanoTime() - startTime);
+            } catch (ClassNotFoundException | IOException e) {
 
-                Log.e("EnergyMeIO", e.toString());
-            } catch (IOException e) {
-
-                Log.e("EnergyMeIO", e.toString());
-            } catch (ClassNotFoundException e) {
                 Log.e("EnergyMeIO", e.toString());
             }
 

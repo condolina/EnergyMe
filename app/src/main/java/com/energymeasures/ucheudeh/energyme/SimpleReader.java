@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -20,9 +19,9 @@ import java.util.ArrayList;
 
 class SimpleReader extends Reader {
 
-    FileChannel fc; // the Ovberloaded read method does not use this object, but makes multiplstrms
+    private FileChannel fc; // the Ovberloaded read method does not use this object, but makes multiplstrms
 
-    public SimpleReader(File path) throws IOException {
+    SimpleReader(File path) throws IOException {
         super(path);
         this.mode = "Simple_Reader";
         try {
@@ -34,7 +33,7 @@ class SimpleReader extends Reader {
         }
     }
 
-    public void read()throws IOException, FileNotFoundException {
+    public void read()throws IOException {
 
 
         /*
@@ -70,13 +69,13 @@ class SimpleReader extends Reader {
 
     }
 
-    void readIn() throws IOException, FileNotFoundException {
+    void readIn() throws IOException {
         /*
         Get the size of the file and make a buffer to contain the entire File.
          */
         //timeStamps.add(System.nanoTime());//Buffer allocate header start/read data to Buffer_Start
 
-        // TODO Consider locking the file here and releasing just before return
+
 
         int dBuffSize = (int)fc.size();// only for testing will be passed directly on nextline
         ByteBuffer dataBuff = getBuffer(dBuffSize);
@@ -92,8 +91,8 @@ class SimpleReader extends Reader {
 
     }
 
-    public ArrayList<Long> read(Context context, String basename)throws IOException, FileNotFoundException {
-        ArrayList<Long> durations = new ArrayList<Long>();
+    public ArrayList<Long> read(Context context, String basename)throws IOException {
+        ArrayList<Long> durations = new ArrayList<>();
 
 
         /*
@@ -116,7 +115,7 @@ class SimpleReader extends Reader {
             fc = context.openFileInput(filename).getChannel();//here open() is executed
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             readIn();
-            durations.add(Long.valueOf(System.nanoTime()-startTime));
+            durations.add(System.nanoTime() - startTime);
         }
 
         for(int i = 0; i<4;i++){
@@ -124,7 +123,7 @@ class SimpleReader extends Reader {
             fc = context.openFileInput(filename).getChannel();
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             readIn();
-            durations.add(Long.valueOf(System.nanoTime()-startTime));
+            durations.add(System.nanoTime() - startTime);
         }
 
 

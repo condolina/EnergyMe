@@ -15,6 +15,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import static java.lang.System.nanoTime;
+
 /**
  * Created by ucheudeh on 6/18/17.
  * the super constructor does nothing at currently.
@@ -22,12 +24,12 @@ import java.util.ArrayList;
  * this version will read 4 matrices then 4 vectors into an array list.
  */
 
-public class MsgPReaderIndiFile extends Reader {
-    public MsgPReaderIndiFile(File path) throws IOException {
+class MsgPReaderIndiFile extends Reader {
+    MsgPReaderIndiFile(File path) throws IOException {
         super(path);
     }
 
-    public ArrayList<Long> read(Context context, String basename) throws IOException, FileNotFoundException {
+    public ArrayList<Long> read(Context context, String basename) throws IOException {
 
 
         /*
@@ -39,23 +41,15 @@ public class MsgPReaderIndiFile extends Reader {
 
          */
 
-        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
-
-        // endTime in main activity
-
-
-        //timeStamps.add(System.nanoTime());
-
 
         ArrayList<Long> duration = readIn(context, basename);
 
 
-        //timeStamps.add(System.nanoTime());
+
         /*
         TODO: Send Stop Trigger to power tool
 
-        norm the CVSWriter for now
-        csvWriter2File();
+
          */
 
         //Log.i("msgPInd FirstElement : ", Double.toString(this.getFirstMatrix().getEntry(1, 1)));
@@ -65,7 +59,7 @@ public class MsgPReaderIndiFile extends Reader {
     }
 
     private ArrayList<Long> readIn(Context context, String basename) throws IOException {
-        ArrayList<Long> durations = new ArrayList<Long>();
+        ArrayList<Long> durations = new ArrayList<>();
         // read the multiple file version of the snapshots: numData. Each record is saved in a Single file
 
         //USAGE for basename: basename[m or v][x], e.g msgPBasisfilem1.dat, msgPBasisfilev1.dat.
@@ -87,10 +81,10 @@ public class MsgPReaderIndiFile extends Reader {
             try {
                 FileInputStream in = context.openFileInput(filename);
                 // a more reliable io method will be better e.g Java.nio
-                Long startTime = System.nanoTime();
+                Long startTime = nanoTime();
                 int fileSize = in.available();
                 byte[] inBuff = new byte[fileSize]; // buffer size change here
-                in.read(inBuff, 0, fileSize);//in fairness read entire file into buffer in memory
+                int fileRead = in.read(inBuff, 0, fileSize);//in fairness read entire file into buffer in memory
                 unMsgPk = MessagePack.newDefaultUnpacker(inBuff); // unpacker has own buffer 8k
 
                 in.close();
@@ -106,7 +100,7 @@ public class MsgPReaderIndiFile extends Reader {
                 }
                 matriceTable.add(new Array2DRowRealMatrix(root));
                 unMsgPk.close();
-                durations.add(Long.valueOf(System.nanoTime()-startTime));
+                durations.add(Long.valueOf(nanoTime()-startTime));
 
             } catch (IOException e) {
                 // TODO: optimisation make a tag string object that is passed to all log entry for message pack
@@ -120,10 +114,10 @@ public class MsgPReaderIndiFile extends Reader {
             try {
                 FileInputStream in = context.openFileInput(filename);
                 // a more reliable io method will be better e.g Java.nio
-                Long startTime = System.nanoTime();
+                Long startTime = nanoTime();
                 int fileSize = in.available();
                 byte[] inBuff2 = new byte[fileSize];
-                in.read(inBuff2, 0, fileSize);
+                int fileRead = in.read(inBuff2, 0, fileSize);
                 unMsgPk = MessagePack.newDefaultUnpacker(inBuff2);
 
                 in.close();
@@ -135,7 +129,7 @@ public class MsgPReaderIndiFile extends Reader {
                     }
                     vectorTable.add(new ArrayRealVector(rootVector));
                 unMsgPk.close();
-                durations.add(Long.valueOf(System.nanoTime()-startTime));
+                durations.add(nanoTime() - startTime);
 
 
             } catch (IOException e) {

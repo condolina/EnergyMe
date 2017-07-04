@@ -63,7 +63,7 @@ public class MsgPackRandomAccessReader extends Reader {
                 //create Library.
 
                 while (unMsgPk.hasNext()) {
-                    library.add((long) unMsgPk.unpackLong());
+                    library.add(unMsgPk.unpackLong());
                 }
                 Log.i("msgPRNDReader", " Library is Ready to take your bringList");
                 fc2.close();//GC'd
@@ -72,7 +72,7 @@ public class MsgPackRandomAccessReader extends Reader {
             }
         }
 
-    public void read(int[] bringList)throws IOException, FileNotFoundException {
+    public void read(int[] bringList)throws IOException {
 
 
         /*
@@ -84,7 +84,7 @@ public class MsgPackRandomAccessReader extends Reader {
 
          */
 
-        startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
+        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
         // endTime in main activity
 

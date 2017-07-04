@@ -1,31 +1,23 @@
 package com.energymeasures.ucheudeh.energyme;
 
-import android.util.Log;
-
-import com.opencsv.CSVWriter;
-
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealVector;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
- * Created by ucheudeh on 6/11/17.
+ * Created by ucheudeh on 6/11/17. Parent reader class, Composition takes place here
  */
 
 public abstract class Reader {
 
     String mode;
-    double startTime, endTime;
-    int dataSize;
     File path;
-    ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<Array2DRowRealMatrix>();
-    ArrayList<ArrayRealVector> vectorTable = new ArrayList<ArrayRealVector>();
+    ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<>();
+    ArrayList<ArrayRealVector> vectorTable = new ArrayList<>();
 
 
 
@@ -35,13 +27,9 @@ public abstract class Reader {
         this.path = path;
 
     }
-    public enum ComposerMode{
-        VECTOR,MATRIX
-    }
 
 
-
-    public ByteBuffer getBuffer(int size){
+    ByteBuffer getBuffer(int size){
         /*
         Litrature suggest that there are benefits with using a direct buffer
         - one less copy process, OS always requires a direct buffer even if it is temporary to
@@ -56,15 +44,10 @@ public abstract class Reader {
 
     }
 
-     protected void composerFactory(ByteBuffer dataBuff){
-
-
-        ComposerMode mode = null;
+     void composerFactory(ByteBuffer dataBuff){
 
 
 
-
-        dataSize = dataBuff.remaining();
          /*
          This methods recieves a Buffer may contain 1 to N records and composes all records in Buffer
          by looping thru each record header in the buffer. Every buffer starts with a header:
@@ -87,7 +70,7 @@ public abstract class Reader {
     Efficiency can be improved by using bulk gets in the composer Row or Column-wise
      */
 
-    public void matrixComposer(ByteBuffer dataBuff, int numRows){
+    private void matrixComposer(ByteBuffer dataBuff, int numRows){
         /*
         Some kind of lock maybe  required on the ByteBuffer or the file channel. So no other
         method advances the position. Otherwise Absolute gets(index) will be used on the buffer.
@@ -96,9 +79,7 @@ public abstract class Reader {
         //timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
 
 
-
-            int row = numRows;
-            int columns = dataBuff.getInt();
+        int columns = dataBuff.getInt();
 
             if (columns<=0){
 
@@ -107,9 +88,9 @@ public abstract class Reader {
             }
 
 
-            double[][] backingMatrix = new double[row][columns];
+            double[][] backingMatrix = new double[numRows][columns];
             //row-wise composition
-            for (int k = 0; k<row;k++){
+            for (int k = 0; k< numRows; k++){
                 for(int z =0; z<columns; z++){
                     backingMatrix[k][z] = dataBuff.getDouble();
                 }
@@ -126,7 +107,7 @@ public abstract class Reader {
 
 
 
-    public void vectorComposer (ByteBuffer dataBuff){
+    private void vectorComposer(ByteBuffer dataBuff){
 
         //timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
 
@@ -154,11 +135,11 @@ public abstract class Reader {
 
 
 
-    public Array2DRowRealMatrix getFirstMatrix(){
+    Array2DRowRealMatrix getFirstMatrix(){
         return matriceTable.get(1);
     }
 
-    public ArrayRealVector getFirstVector(){
+    ArrayRealVector getFirstVector(){
         return vectorTable.get(1);
     }
 
