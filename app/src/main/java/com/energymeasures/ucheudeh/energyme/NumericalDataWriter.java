@@ -84,7 +84,7 @@ public class NumericalDataWriter {
             fc.write(matrixBuffer);
             fc.close();
 
-            Log.i("File InfoWrite:FileSize", basename+"m"+i+"-"+Long.toString(path.length()));
+            Log.i("File InfoWrite:Filesize", basename+"m"+i+"-"+Long.toString(path.length()));
             i++;
 
         }

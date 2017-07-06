@@ -29,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         final Context context = this.getApplicationContext();
         setContentView(R.layout.activity_main);
-        String message = "Java Serialization - with Normal Read. ";
+        String message = "Testing in progress. Results are being generated ";
 
         TextView textView = new TextView(this);
         textView.setText(message);
@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         LinkedHashMap<String,int[]> dbanke = new LinkedHashMap<>();
 
 
-        //ArrayList<int[]> dbank = new ArrayList<>(); //holds the test group seed arrays
+
         dbanke.put("dPreamble",new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
         dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65536 doubles: CORE
         //The following groups are padded with 1s, to give a uniform structure in the "big" read
@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                 experimentWrite(context,numData);
 
             } catch (IOException e) {
-                Log.e("ExperimentWrite","IOerror at File creation" + e.toString());
+                Log.e("ExperimentWriter","IOerror at File creation" + e.toString());
             }
 
 
@@ -95,47 +95,17 @@ public class MainActivity extends AppCompatActivity {
             Log.e("ExperimentWrite","IOerror at File creation" + e.toString());
         }
 
+        message = "Test now completed. Results are in the respective CSV files";
+        textView.setText(message);
+        setContentView(textView);
 
 
 
 
-    }
-/*
-    private String getGroupType(int i) {
-        String type;
-
-
-        switch (i){
-            case 0:
-               type = "dPreamble";
-                break;
-
-            case 1:
-                type = "dCore";
-                break;
-
-            case 2:
-                type =  "dBoarder";
-                break;
-
-            case 3:
-                type =  "dExtreme";
-                break;
-
-            case 4:
-                type =  "dInsane";
-                break;
-
-            default:
-                type =  "dCore";
-                break;
-
-
-        }
-        return type;
 
     }
-*/
+
+
     private void experimentWrite(Context context, SnapshotsBasket numData) throws IOException {
         // Run Once, create all files from the same SnapshotsBasket (Same Matrices and Arrays)
         /*

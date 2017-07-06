@@ -92,7 +92,7 @@ public class MsgPSerializer extends SerializeMe {
 
 public void write(SnapshotsBasket numData) throws IOException {
     doWrite(numData);
-   // writeIndi(numData);
+    writeIndi(numData);
 }
 
     @Override
