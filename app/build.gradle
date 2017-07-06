@@ -29,8 +29,8 @@ dependencies {
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
+    compile files('build/Utilities/joda-time-2.9.9.jar')
     compile files('build/commons-math3-3.6.1/commons-math3-3.6.1.jar')
+    compile files('build/OpenCVS/opencsv-3.9.jar')
     compile files('build/Serializers/MsgPack/msgpack-core-0.8.12.jar')
-    compile files('build/Utils/joda-time-2.9.9.jar')
-    compile files('build/Jars/opencsv-3.9.jar')
 }

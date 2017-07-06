@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -44,21 +46,23 @@ public class MainActivity extends AppCompatActivity {
 
 //for read only block off from this point
 
+        LinkedHashMap<String,int[]> dbanke = new LinkedHashMap<>();
 
-        ArrayList<int[]> dbank = new ArrayList<>(); //holds the test group seed arrays
-        dbank.add(new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
-        dbank.add(new int[]{5,6,7,8});//largest matrix/vector has 65536 doubles: CORE
+
+        //ArrayList<int[]> dbank = new ArrayList<>(); //holds the test group seed arrays
+        dbanke.put("dPreamble",new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
+        dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65536 doubles: CORE
         //The following groups are padded with 1s, to give a uniform structure in the "big" read
-        dbank.add(new int[]{1,1,9,10});//largest matrix/vector has 1048576 doubles : BOARDER
-        //dbank.add(new int[]{1,1,11,12});//largest matrix/vector has 16777216 doubles : EXTREME
-        //dbank.add(new int[]{1,1,1,13});//largest matrix/vector has 671108864 doubles : INSANE
+        dbanke.put("dBoarder",new int[]{1,1,9,10});//largest matrix/vector has 1048576 doubles : BOARDER
+        dbanke.put("dExtreme",new int[]{1,1,11,12});//largest matrix/vector has 16777216 doubles : EXTREME
+        dbanke.put("dInsane",new int[]{1,1,1,13});//largest matrix/vector has 671108864 doubles : INSANE
 
 
 
 
 
-        for (int i = 0; i<dbank.size(); i++) {
-            SnapshotsBasket numData = new SnapshotsBasket(dbank.get(i), getGroupType(i));
+        for (int i = 0; i<dbanke.size(); i++) {
+            SnapshotsBasket numData = new SnapshotsBasket(dbanke.get(dbanke.keySet().toArray()[i]), (String)dbanke.keySet().toArray()[i]);
             try {
                 experimentWrite(context,numData);
 
@@ -96,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
+/*
     private String getGroupType(int i) {
         String type;
 
@@ -131,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         return type;
 
     }
-
+*/
     private void experimentWrite(Context context, SnapshotsBasket numData) throws IOException {
         // Run Once, create all files from the same SnapshotsBasket (Same Matrices and Arrays)
         /*
@@ -219,34 +223,34 @@ public class MainActivity extends AppCompatActivity {
 
 
         if(!isExternalStorageWritable()){
-            file = new File (context.getFilesDir(),"cvs"+tag+ System.currentTimeMillis());}
+            file = new File (context.getFilesDir(),"cvs"+tag+ System.currentTimeMillis()+".csv");}
         else{
 
             // prepare to save file in SDCard
             File nestedFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
 
-            if (!nestedFolder.mkdirs()) {
+            nestedFolder.mkdirs();
+            if (!nestedFolder.isDirectory()) {
                 Log.e("Document Directory__:", "Directory not created");
             }
-           File resultDir= new File(nestedFolder, "EnergymeasuresCSVs");
-
-            if (!resultDir.mkdirs()) {
+            File resultDir= new File(nestedFolder, "EnergymeasuresCSVs");
+            resultDir.mkdirs();
+            if (!resultDir.isDirectory()) {
                 Log.e("Document Directory__:", "Directory not created");
             }
 
 
 
 
-            file = new File (resultDir,"CSV_"+tag+System.currentTimeMillis());
+
+            file = new File (resultDir,"CSV_"+tag+System.currentTimeMillis()+".csv");
 
 
         }
         CSVWriter results = new CSVWriter(new FileWriter(file));
         ArrayList<String> headerCan = new ArrayList<>();
-        String [] headers = ("###" +
-                "#EnerMeREADTImeIndi#jSerIndiFile#msgPIndiFile#" +
-                "##").split("#");
-        results.writeNext(headers);
+
+
 
         /*
 
@@ -289,6 +293,12 @@ public class MainActivity extends AppCompatActivity {
 
             //eneM Random with MMap - Lazy Only
             timeStamps.add(callReadeneMRndLateMmap(context, tag, headerCan));
+
+            if (i==0){// after first iteration write CSV file headers
+                String [] headers = new String [headerCan.size()];
+                headers = headerCan.toArray(headers);
+                results.writeNext(headers);
+            }
 
 
 

@@ -83,8 +83,9 @@ public class NumericalDataWriter {
             ByteBuffer matrixBuffer = constructMatrix(matrix);
             fc.write(matrixBuffer);
             fc.close();
-            i++;
+
             Log.i("File InfoWrite:FileSize", basename+"m"+i+"-"+Long.toString(path.length()));
+            i++;
 
         }
 
@@ -96,9 +97,10 @@ public class NumericalDataWriter {
             ByteBuffer vectorBuffer = constructVector(vector);
             fc.write(vectorBuffer);
             fc.close();
-            i++;
+
 
             Log.i("File InfoWrite:FileSize", basename+"v"+i+"-"+Long.toString(path.length()));
+            i++;
 
         }
 
