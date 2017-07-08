@@ -80,7 +80,7 @@ public class MsgPSerializer extends SerializeMe {
 
 
         } catch (IOException e) {
-            // TODO: optimisation make a tag string object that is passed to all log entry for message pack
+
             Log.e("MsgPack",e.toString());
         }
         // get headers
