@@ -67,7 +67,7 @@ public abstract class Reader {
     }
 
     /*
-    Efficiency can be improved by using bulk gets in the composer Row or Column-wise
+    Efficiency can be improved by using bulk gets in the composer Row or Column-wise.
      */
 
     private void matrixComposer(ByteBuffer dataBuff, int numRows){
