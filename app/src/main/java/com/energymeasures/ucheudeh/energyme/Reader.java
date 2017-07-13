@@ -6,6 +6,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
 import java.util.ArrayList;
 
 /**
@@ -18,6 +19,7 @@ public abstract class Reader {
     File path;
     ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<>();
     ArrayList<ArrayRealVector> vectorTable = new ArrayList<>();
+    final int DOUBLE_SIZE = 8;
 
 
 
@@ -91,10 +93,19 @@ public abstract class Reader {
             double[][] backingMatrix = new double[numRows][columns];
             //row-wise composition
             for (int k = 0; k< numRows; k++){
+/*
+
                 for(int z =0; z<columns; z++){
                     backingMatrix[k][z] = dataBuff.getDouble();
                 }
-                //
+*/
+
+                // Row blocks to be blocked off for normal composer.
+                ByteBuffer rowBlock = dataBuff.get(new byte[columns*DOUBLE_SIZE]);
+
+                rowBlock.asDoubleBuffer().get(backingMatrix[k]);
+
+
             }
         //timeStamps.add(System.nanoTime());//backing array End
         //
@@ -118,11 +129,17 @@ public abstract class Reader {
             System.exit(2);
         }
 
-        double [] backingVector = new double[numElements];
 
+        double [] backingVector = new double[numElements];
+        ByteBuffer rowBlock = dataBuff.get(new byte[numElements*DOUBLE_SIZE]);
+        rowBlock.asDoubleBuffer().get(backingVector);
+
+/*
+        double [] backingVector = new double[numElements];
         for (int w=0; w<numElements;w++){
             backingVector[w] = dataBuff.getDouble();
         }
+*/
         //timeStamps.add(System.nanoTime());//backing array End
         ArrayRealVector vinx = new ArrayRealVector(backingVector);
 

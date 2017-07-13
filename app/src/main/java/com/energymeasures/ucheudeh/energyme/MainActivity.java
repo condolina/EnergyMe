@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
         // On some devices making this CORE(8), BOARDER, EXTREME, INSANE may not be possible due to
         // JVM environment limitations. Minimum, Xmx1024M, XX:maxPermSize=512.
         //seed array need to generate data groups
-
+/*
 
 //for read only block off from this point
 
@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
 // Block off readonly end point
 
 
-
+*/
 
 
 
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             int repeats = 1; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
-            String[] experimentTag = {"dPreamble","dCore","dBoarder"};// ,control which group is read with tag
+            String[] experimentTag = {"dPreamble"};//,"dCore","dBoarder" ,control which group is read with tag
             for(String tag: experimentTag)
             experimentRead(context, repeats, tag);//
             cacheCleaner(context);
@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
 
             // eneM Single File Simple
             timeStamps.add(callReadeneMBig(context, tag, headerCan));
-
+/*
             // jSer read Single File
             timeStamps.add(callReadjSerBig(context, tag, headerCan));
 
@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
 
             // eneM Random Lazy
             timeStamps.add(callReadeneMRndLate(context, tag, headerCan));
-
+*/
             //eneM Random with MMap - Lazy Only
             timeStamps.add(callReadeneMRndLateMmap(context, tag, headerCan));
 
