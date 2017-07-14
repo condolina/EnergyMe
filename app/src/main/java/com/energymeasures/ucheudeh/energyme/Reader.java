@@ -35,7 +35,7 @@ public abstract class Reader {
         /*
         Litrature suggest that there are benefits with using a direct buffer
         - one less copy process, OS always requires a direct buffer even if it is temporary to
-            interact with the indirect buffer. Reason being that OS requires a contigous sequence of
+            interact with the indirect buffer. Reason being that OS prefers a contigous sequence of
             byte spaces in memory if it is going to interact directly with such a buffer. Given that
             the OS will directly access the user space memory, with out recurse to to use application
             about any form of indirection that may otherwise exist, for example, in an indirect
@@ -43,6 +43,8 @@ public abstract class Reader {
          */
 
         return ByteBuffer.allocate(size);
+
+        //return ByteBuffer.allocateDirect(size);
 
     }
 
