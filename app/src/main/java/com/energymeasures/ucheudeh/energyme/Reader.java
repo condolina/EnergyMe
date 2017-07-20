@@ -1,5 +1,7 @@
 package com.energymeasures.ucheudeh.energyme;
 
+import android.util.Log;
+
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
@@ -20,8 +22,9 @@ public abstract class Reader {
     ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<>();
     ArrayList<ArrayRealVector> vectorTable = new ArrayList<>();
     final int DOUBLE_SIZE = 8;
-
-
+    ArrayList<FlatArray2DRowRealMatrix> matriceTableFLAT = new ArrayList<>();
+    ArrayList<FlatArrayRealVector> vectorTableFLAT = new ArrayList<>();
+    byte [] buffArray = null;
 
 
     public Reader(File path) throws IOException {
@@ -41,8 +44,9 @@ public abstract class Reader {
             about any form of indirection that may otherwise exist, for example, in an indirect
             buffer where there are not gurantees of a contigous allocation. (Java NiO pg 45)
          */
+        buffArray = new byte[size]; // will be used as universal backing array for this Reader
+        return ByteBuffer.wrap(buffArray);
 
-        return ByteBuffer.allocate(size);
 
         //return ByteBuffer.allocateDirect(size);
 
@@ -59,15 +63,65 @@ public abstract class Reader {
          identify matrix or vector and calls the appropriate Composer
           */
         while (dataBuff.hasRemaining()) {
-
+// method calls will be uncommented accordingly to test different factors
             int numRows = dataBuff.getInt();
-            if (numRows == 1) vectorComposer(dataBuff);
-            else if (numRows > 1) matrixComposer(dataBuff, numRows);
-            else{break;}
+            if (numRows == 1) matrixVectorComposerFLAT(dataBuff, numRows);//vectorComposer(dataBuff);
+            else if (numRows > 1) matrixVectorComposerFLAT(dataBuff, numRows);//matrixComposer(dataBuff, numRows);
+            else{
+                Log.e("Format Error", "Row =< 0!");
+            System.exit(-1);}
 
         }
 
 
+    }
+
+    private void vectorComposerFLAT(ByteBuffer dataBuff) {
+        final int HEADER = 8;
+        final int DOUBLE = 8;
+        int columns = dataBuff.getInt();
+
+
+    }
+
+    private void matrixVectorComposerFLAT(ByteBuffer dataBuff, int numRows) {
+        /*
+        This method will attempt to reduce latency by procrasinating the structural definitaion
+        of the numerical data. The raw bytes will be used to create a FlatArray2DRowMatrix and
+        FlatArrayRealVector respectively. This is the main bane of this research as it repesents
+        an opposite extreme from the custom of early "humanization" of numerical data for computer
+        systems. Humanization here refers to the act of delibrately or automatically preserving
+        numerical data on computer systems in chalkboard form.
+
+         */
+        final int HEADER = 8;
+        final int DOUBLE = 8;
+        int columns = dataBuff.getInt();
+
+        if (columns <= 0) {
+
+            System.exit(1);
+
+        }
+        int recordSize = numRows * columns * DOUBLE_SIZE + HEADER;
+        if (dataBuff.capacity() == recordSize) {
+            if(numRows==1){
+                this.vectorTableFLAT.add(new FlatArrayRealVector(buffArray,columns));
+                dataBuff.position(recordSize);
+            }else {
+                this.matriceTableFLAT.add(new FlatArray2DRowRealMatrix(buffArray, numRows, columns));
+                dataBuff.position(recordSize);
+            }
+        } else {
+            byte[] buffByte = new byte[recordSize];
+            ByteBuffer matrixBuffer = ByteBuffer.wrap(buffByte).putInt(numRows).putInt(columns);
+            dataBuff.get(buffByte, HEADER, (numRows * columns * DOUBLE));
+            if(numRows==1){
+                this.vectorTableFLAT.add(new FlatArrayRealVector(buffByte,columns));
+            }else {
+                this.matriceTableFLAT.add(new FlatArray2DRowRealMatrix(buffByte, numRows, columns));
+            }
+        }
     }
 
     /*
@@ -93,25 +147,32 @@ public abstract class Reader {
 
 
             double[][] backingMatrix = new double[numRows][columns];
-            //row-wise composition
+           //rowDimension-wise composition
             for (int k = 0; k< numRows; k++){
-/*
 
+/*
                 for(int z =0; z<columns; z++){
                     backingMatrix[k][z] = dataBuff.getDouble();
                 }
+
 */
-
                 // Row blocks to be blocked off for normal composer.
-                ByteBuffer rowBlock = dataBuff.get(new byte[columns*DOUBLE_SIZE]);
+                byte [] rowbyte = new byte[columns*DOUBLE_SIZE];
+                dataBuff.get(rowbyte);
 
-                rowBlock.asDoubleBuffer().get(backingMatrix[k]);
+                DoubleBuffer backingBuffer = ByteBuffer.wrap(rowbyte).asDoubleBuffer();
+                if(backingBuffer.hasArray()){
+                    backingMatrix[k]=backingBuffer.array();
+                }else{
+
+                    backingBuffer.get(backingMatrix[k]);
+                }
 
 
             }
         //timeStamps.add(System.nanoTime());//backing array End
         //
-        Array2DRowRealMatrix minx = new Array2DRowRealMatrix(backingMatrix);
+        Array2DRowRealMatrix minx = new Array2DRowRealMatrix(backingMatrix,false);
         //timeStamps.add(System.nanoTime());//Object Construction _End Composer end
         this.matriceTable.add(minx);
         //Log.i("Minx", "Added");// just for testing remove afterwards
@@ -133,8 +194,16 @@ public abstract class Reader {
 
 
         double [] backingVector = new double[numElements];
-        ByteBuffer rowBlock = dataBuff.get(new byte[numElements*DOUBLE_SIZE]);
-        rowBlock.asDoubleBuffer().get(backingVector);
+        byte [] rowbyte = new byte[numElements*DOUBLE_SIZE];
+        dataBuff.get(rowbyte);
+
+        DoubleBuffer backingBuffer= ByteBuffer.wrap(rowbyte).asDoubleBuffer();
+        if(backingBuffer.hasArray()){
+            backingVector=backingBuffer.array();
+        }else{
+
+            backingBuffer.get(backingVector);
+        }
 
 /*
         double [] backingVector = new double[numElements];
@@ -143,7 +212,7 @@ public abstract class Reader {
         }
 */
         //timeStamps.add(System.nanoTime());//backing array End
-        ArrayRealVector vinx = new ArrayRealVector(backingVector);
+        ArrayRealVector vinx = new ArrayRealVector(backingVector,false);
 
         //timeStamps.add(System.nanoTime());//Object Construction _End Composer end
 

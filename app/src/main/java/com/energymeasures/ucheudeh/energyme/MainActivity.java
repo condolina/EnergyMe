@@ -85,12 +85,14 @@ public class MainActivity extends AppCompatActivity {
 
 
         try {
-            int repeats = 1; // number of read repeats
+            int repeats = 5; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
-            String[] experimentTag = {"dPreamble"};//,"dCore","dBoarder" ,control which group is read with tag
+            String[] experimentTag = {"dPreamble","dCore","dBoarder"};// ,control which group is read with tag
             for(String tag: experimentTag)
             experimentRead(context, repeats, tag);//
-            cacheCleaner(context);
+            //cacheCleaner(context);
+            //System.gc();
+
         } catch (IOException e) {
             Log.e("ExperimentWrite","IOerror at File creation" + e.toString());
         }
@@ -232,10 +234,10 @@ public class MainActivity extends AppCompatActivity {
         for (int i=0; i<repeats;i++) {
 
             timeStamps = new ArrayList<>();// will be written out to CVS later
-
+/*
             // eneM Single File Simple
             timeStamps.add(callReadeneMBig(context, tag, headerCan));
-/*
+
             // jSer read Single File
             timeStamps.add(callReadjSerBig(context, tag, headerCan));
 
@@ -244,11 +246,11 @@ public class MainActivity extends AppCompatActivity {
 
             //eneM MMap Single File
             timeStamps.add(callReadeneMMap(context, tag, headerCan));
-
+*/
 
             // eneM Indi
             timeStamps.addAll(callReadeneMIndi(context,tag,headerCan));
-
+/*
             // jSer Indi
             timeStamps.addAll(callReadjSerIndi(context,tag,headerCan));
 
@@ -260,10 +262,10 @@ public class MainActivity extends AppCompatActivity {
 
             // eneM Random Lazy
             timeStamps.add(callReadeneMRndLate(context, tag, headerCan));
-*/
+
             //eneM Random with MMap - Lazy Only
             timeStamps.add(callReadeneMRndLateMmap(context, tag, headerCan));
-
+*/
             if (i==0){// after first iteration write CSV file headers
                 String [] headers = new String [headerCan.size()];
                 headers = headerCan.toArray(headers);
