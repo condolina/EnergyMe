@@ -5,6 +5,7 @@ import android.content.Context;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
@@ -90,6 +91,7 @@ public class MMapRandomAccessReader extends RandomAccessReader {
 
 // Map just this record to memory and return to the application
             MappedByteBuffer dataBuff = fc.map(FileChannel.MapMode.READ_ONLY,pointer,recordSize);
+       //     MappedByteBuffer dataBuff = fc.map(FileChannel.MapMode.READ_ONLY,pointer,recordSize).order(ByteOrder.LITTLE_ENDIAN);
             //timeStamps.add(System.nanoTime());//Read record to buffer_end
 
 

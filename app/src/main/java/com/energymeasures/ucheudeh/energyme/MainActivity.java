@@ -51,11 +51,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         dbanke.put("dPreamble",new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
-        dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65536 doubles: CORE
+        dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65,536 doubles: CORE
         //The following groups are padded with 1s, to give a uniform structure in the "big" read
-        dbanke.put("dBoarder",new int[]{1,1,9,10});//largest matrix/vector has 1048576 doubles : BOARDER
-        dbanke.put("dExtreme",new int[]{1,1,11,12});//largest matrix/vector has 16777216 doubles : EXTREME
-        dbanke.put("dInsane",new int[]{1,1,1,13});//largest matrix/vector has 671108864 doubles : INSANE
+        dbanke.put("dBoarder",new int[]{1,1,9,10});//largest matrix/vector has 1,048,576 doubles : BOARDER
+        dbanke.put("dExtreme",new int[]{1,1,11,12});//largest matrix/vector has 16,777,216 doubles : EXTREME
+        dbanke.put("dInsane",new int[]{1,1,1,13});//largest matrix/vector has 671,108,864 doubles : INSANE
 
 
 
@@ -287,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private ArrayList<Long> callReadmsgPIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {
-        cacheCleaner(context);
+        //cacheCleaner(context);
         //long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"MsgPBasisBig"+tag+".dat");// Ignored in actual method
 
@@ -312,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
 
     private long callReadmsgPBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         headerCan.add("msgPBigRead");
-        cacheCleaner(context);
+        //cacheCleaner(context);
         long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"MsgPBasisBig"+tag+".dat");
 
@@ -327,7 +327,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private ArrayList<Long> callReadjSerIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {
-        cacheCleaner(context);
+        //cacheCleaner(context);
         //long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"jSerBig"+tag+".dat");// Ignored in actual method
 
@@ -351,7 +351,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private long callReadjSerBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
-        cacheCleaner(context);
+        //cacheCleaner(context);
         headerCan.add("jSerBigFile");
         long starttime = System.nanoTime();
         File path = new File (context.getFilesDir(),"jSerBig"+tag+".dat");
@@ -370,7 +370,7 @@ public class MainActivity extends AppCompatActivity {
 
     private long callReadeneMMap(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         headerCan.add("EnerMeRMmapBigFile");
-        cacheCleaner(context);
+        //cacheCleaner(context);
         long eMeRStime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
 
@@ -392,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
         is a better use case than asking for all records in the file.
          */
         headerCan.add("eneM_Rnd_Lazy");
-        cacheCleaner(context);
+        //cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndtime = System.nanoTime();
         File pathRnd = new File (context.getFilesDir(),"eneMRnd"+tag+".dat");
@@ -408,7 +408,7 @@ public class MainActivity extends AppCompatActivity {
 
     private long callReadeneMRndEarly(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         headerCan.add("eneM_Rnd_Proactv");
-        cacheCleaner(context);
+        //cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndtime = System.nanoTime();
         File pathRnd = new File (context.getFilesDir(),"eneMRnd"+tag+".dat");
@@ -428,7 +428,7 @@ public class MainActivity extends AppCompatActivity {
         is a better use case than asking for all records in the file.
          */
         headerCan.add("eneM_Mmap_Rnd_Lazy");
-        cacheCleaner(context);
+        //cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndMmaptime = System.nanoTime();
         File pathRnd = new File (context.getFilesDir(),"eneMRnd"+tag+".dat");
@@ -443,7 +443,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private ArrayList<Long> callReadeneMIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {
-        cacheCleaner(context);
+        //cacheCleaner(context);
         //long eMeRSInditime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
 
@@ -465,7 +465,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private long callReadeneMBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
-        cacheCleaner(context);
+        //cacheCleaner(context);
         headerCan.add("EnerMeREADTBig");
         long eMeRStime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);

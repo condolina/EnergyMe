@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 
@@ -92,10 +93,11 @@ class SimpleReader extends Reader {
 
         byte [] bufBack = new byte[8192];
 
-
+        //ByteBuffer buf = ByteBuffer.wrap(bufBack).order(ByteOrder.LITTLE_ENDIAN);
         ByteBuffer buf = ByteBuffer.wrap(bufBack);// shown by experiment to be the a good mark
         // beyond which performance flattens see David Nadeau'S EXPERIMENT
         //ByteBuffer buf = ByteBuffer.allocateDirect(8192); // direct buffer implementation
+        //ByteBuffer buf = ByteBuffer.allocateDirect(8192).order(ByteOrder.LITTLE_ENDIAN); // little end direct buffer implementation
 
         int rCount,bCount;
         double [] vector = null;
@@ -178,7 +180,7 @@ class SimpleReader extends Reader {
 
 
         int dBuffSize = (int)fc.size();// only for testing will be passed directly on nextline
-        ByteBuffer dataBuff = getBuffer(dBuffSize);
+        ByteBuffer dataBuff = getBuffer(dBuffSize);// endianess: choice in Reader method
         ////timeStamps.add(System.nanoTime());// buffer allocate main_end/start fill buffer
         fc.read(dataBuff);
         ////timeStamps.add(System.nanoTime());// fill main buffer end

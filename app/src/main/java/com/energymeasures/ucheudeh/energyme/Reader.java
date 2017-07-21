@@ -8,11 +8,13 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.util.ArrayList;
 
 /**
  * Created by ucheudeh on 6/11/17. Parent reader class, Composition takes place here
+ * Can perform operations in Little_Endian or Big_Endian
  */
 
 public abstract class Reader {
@@ -46,9 +48,11 @@ public abstract class Reader {
          */
         buffArray = new byte[size]; // will be used as universal backing array for this Reader
         return ByteBuffer.wrap(buffArray);
+        //return ByteBuffer.wrap(buffArray).order(ByteOrder.LITTLE_ENDIAN);
 
 
         //return ByteBuffer.allocateDirect(size);
+        //return ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN);
 
     }
 
@@ -76,13 +80,7 @@ public abstract class Reader {
 
     }
 
-    private void vectorComposerFLAT(ByteBuffer dataBuff) {
-        final int HEADER = 8;
-        final int DOUBLE = 8;
-        int columns = dataBuff.getInt();
 
-
-    }
 
     private void matrixVectorComposerFLAT(ByteBuffer dataBuff, int numRows) {
         /*
@@ -115,6 +113,7 @@ public abstract class Reader {
         } else {
             byte[] buffByte = new byte[recordSize];
             ByteBuffer matrixBuffer = ByteBuffer.wrap(buffByte).putInt(numRows).putInt(columns);
+            //ByteBuffer matrixBuffer = ByteBuffer.wrap(buffByte).order(ByteOrder.LITTLE_ENDIAN).putInt(numRows).putInt(columns);
             dataBuff.get(buffByte, HEADER, (numRows * columns * DOUBLE));
             if(numRows==1){
                 this.vectorTableFLAT.add(new FlatArrayRealVector(buffByte,columns));
@@ -161,6 +160,7 @@ public abstract class Reader {
                 dataBuff.get(rowbyte);
 
                 DoubleBuffer backingBuffer = ByteBuffer.wrap(rowbyte).asDoubleBuffer();
+                //DoubleBuffer backingBuffer = ByteBuffer.wrap(rowbyte).order(ByteOrder.LITTLE_ENDIAN).asDoubleBuffer();
                 if(backingBuffer.hasArray()){
                     backingMatrix[k]=backingBuffer.array();
                 }else{
@@ -198,6 +198,7 @@ public abstract class Reader {
         dataBuff.get(rowbyte);
 
         DoubleBuffer backingBuffer= ByteBuffer.wrap(rowbyte).asDoubleBuffer();
+        //DoubleBuffer backingBuffer= ByteBuffer.wrap(rowbyte).order(ByteOrder.LITTLE_ENDIAN).asDoubleBuffer();
         if(backingBuffer.hasArray()){
             backingVector=backingBuffer.array();
         }else{
