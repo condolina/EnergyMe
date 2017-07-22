@@ -15,7 +15,7 @@ import java.nio.channels.FileChannel;
  * Created by ucheudeh on 6/11/17.
  */
 
-public class MappedReader extends Reader {
+public class MappedReader extends SimpleReader {
 
     FileChannel fc;
 
@@ -35,7 +35,7 @@ public class MappedReader extends Reader {
             Log.e(this.mode," : "+ e.toString());
         }
 
-    }
+    }@Override
     public void read()throws IOException, FileNotFoundException {
 
 
@@ -71,6 +71,7 @@ public class MappedReader extends Reader {
 
 
     }
+    @Override
     void readIn() throws IOException, FileNotFoundException {
         final int INT_LENGHT = 4;
 

@@ -55,10 +55,13 @@ class SimpleReader extends Reader {
         //timeStamps.add(System.nanoTime());
 
 
+    // Reads using buffer of same size as file
+        //readIn();
 
-        readIn();
-        //readInChunks();
-
+        /*
+        Reads using buffers of fixed size that are multiples of the NAND page size e.g 8192
+         */
+        readInChunks();
 
 
         //timeStamps.add(System.nanoTime());
@@ -77,7 +80,7 @@ class SimpleReader extends Reader {
 
 
 
-    void readInChunks() throws IOException{
+    private void readInChunks() throws IOException{
         /*
         This method reads with a smaller fixed buffer size. 2048 Bytes is chosen due to the page
         size commonly used in many NAND flash brands. It provides a efficient read. The methods
@@ -94,9 +97,9 @@ class SimpleReader extends Reader {
         byte [] bufBack = new byte[8192];
 
         //ByteBuffer buf = ByteBuffer.wrap(bufBack).order(ByteOrder.LITTLE_ENDIAN);
-        ByteBuffer buf = ByteBuffer.wrap(bufBack);// shown by experiment to be the a good mark
+        //ByteBuffer buf = ByteBuffer.wrap(bufBack);// shown by experiment to be the a good mark
         // beyond which performance flattens see David Nadeau'S EXPERIMENT
-        //ByteBuffer buf = ByteBuffer.allocateDirect(8192); // direct buffer implementation
+        ByteBuffer buf = ByteBuffer.allocateDirect(8192); // direct buffer implementation
         //ByteBuffer buf = ByteBuffer.allocateDirect(8192).order(ByteOrder.LITTLE_ENDIAN); // little end direct buffer implementation
 
         int rCount,bCount;

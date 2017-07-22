@@ -47,10 +47,10 @@ public abstract class Reader {
             buffer where there are not gurantees of a contigous allocation. (Java NiO pg 45)
          */
         buffArray = new byte[size]; // will be used as universal backing array for this Reader
-        return ByteBuffer.wrap(buffArray);
+        //return ByteBuffer.wrap(buffArray);
         //return ByteBuffer.wrap(buffArray).order(ByteOrder.LITTLE_ENDIAN);
 
-
+        return ByteBuffer.allocate(size);
         //return ByteBuffer.allocateDirect(size);
         //return ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -69,8 +69,8 @@ public abstract class Reader {
         while (dataBuff.hasRemaining()) {
 // method calls will be uncommented accordingly to test different factors
             int numRows = dataBuff.getInt();
-            if (numRows == 1) matrixVectorComposerFLAT(dataBuff, numRows);//vectorComposer(dataBuff);
-            else if (numRows > 1) matrixVectorComposerFLAT(dataBuff, numRows);//matrixComposer(dataBuff, numRows);
+            if (numRows == 1)vectorComposer(dataBuff); //matrixVectorComposerFLAT(dataBuff, numRows);
+            else if (numRows > 1) matrixComposer(dataBuff, numRows);//matrixVectorComposerFLAT(dataBuff, numRows);
             else{
                 Log.e("Format Error", "Row =< 0!");
             System.exit(-1);}

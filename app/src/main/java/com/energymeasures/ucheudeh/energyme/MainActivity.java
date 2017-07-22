@@ -42,8 +42,8 @@ public class MainActivity extends AppCompatActivity {
         // On some devices making this CORE(8), BOARDER, EXTREME, INSANE may not be possible due to
         // JVM environment limitations. Minimum, Xmx1024M, XX:maxPermSize=512.
         //seed array need to generate data groups
-/*
 
+/*
 //for read only block off from this point
 
         LinkedHashMap<String,int[]> dbanke = new LinkedHashMap<>();
@@ -51,11 +51,11 @@ public class MainActivity extends AppCompatActivity {
 
 
         dbanke.put("dPreamble",new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
-        dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65,536 doubles: CORE
+       // dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65,536 doubles: CORE
         //The following groups are padded with 1s, to give a uniform structure in the "big" read
-        dbanke.put("dBoarder",new int[]{1,1,9,10});//largest matrix/vector has 1,048,576 doubles : BOARDER
-        dbanke.put("dExtreme",new int[]{1,1,11,12});//largest matrix/vector has 16,777,216 doubles : EXTREME
-        dbanke.put("dInsane",new int[]{1,1,1,13});//largest matrix/vector has 671,108,864 doubles : INSANE
+       // dbanke.put("dBoarder",new int[]{1,1,9,10});//largest matrix/vector has 1,048,576 doubles : BOARDER
+      //  dbanke.put("dExtreme",new int[]{1,1,11,12});//largest matrix/vector has 16,777,216 doubles : EXTREME
+       // dbanke.put("dInsane",new int[]{1,1,1,13});//largest matrix/vector has 671,108,864 doubles : INSANE
 
 
 
@@ -75,8 +75,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 // Block off readonly end point
-
-
 */
 
 
@@ -84,10 +82,12 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
+
         try {
-            int repeats = 5; // number of read repeats
+            int repeats = 30; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
-            String[] experimentTag = {"dPreamble","dCore","dBoarder"};// ,control which group is read with tag
+            String[] experimentTag = {"dPreamble"};//,"dCore","dBoarder" ,control which group is read with tag
             for(String tag: experimentTag)
             experimentRead(context, repeats, tag);//
             //cacheCleaner(context);
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         (ref: https://shipilev.net/blog/2014/nanotrusting-nanotime/#_granularity).
          */
 
-
+/*
         //eneM: Simple and MMAP Test Files Big and Indi Files
         NumericalDataWriter regMapW = new NumericalDataWriter(context);
         long eMeWStime = System.nanoTime();
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
         long jWEtime = System.nanoTime();
         Log.i("Java SerWriteTIme-", Long.toString(jWEtime-jWStime));
 
-
+*/
 
         // msgPWriter (Big and Indi files)
 
@@ -235,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
 
             timeStamps = new ArrayList<>();// will be written out to CVS later
 /*
-            // eneM Single File Simple
+            // eneM Single File (Contains matrices and vectors)
             timeStamps.add(callReadeneMBig(context, tag, headerCan));
 
             // jSer read Single File
@@ -247,15 +247,19 @@ public class MainActivity extends AppCompatActivity {
             //eneM MMap Single File
             timeStamps.add(callReadeneMMap(context, tag, headerCan));
 */
+            // msgP Indi Files
+            timeStamps.addAll(callReadmsgPIndi(context,tag,headerCan));
 
             // eneM Indi
             timeStamps.addAll(callReadeneMIndi(context,tag,headerCan));
-/*
+
             // jSer Indi
             timeStamps.addAll(callReadjSerIndi(context,tag,headerCan));
 
-            // msgP Indi Files
-            timeStamps.addAll(callReadmsgPIndi(context,tag,headerCan));
+            //mmapIndi
+            timeStamps.addAll(callReadMMapIndi(context,tag,headerCan));
+
+  /*
 
             //eneM Random Proactive
             timeStamps.add(callReadeneMRndEarly(context, tag, headerCan));
@@ -462,6 +466,28 @@ public class MainActivity extends AppCompatActivity {
        // long duration = eMeREInditime-eMeRSInditime;
         //Log.i("EnerMeREADTImeIndi   - ", Long.toString(duration));
         return regMapRIndi.read(context,"regMappedIndi"+tag);
+    }
+
+    private ArrayList<Long> callReadMMapIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {
+        //cacheCleaner(context);
+        //long eMeRSInditime = System.nanoTime();
+        File path = new File (context.getFilesDir(),"regMappedBig"+tag);
+
+        MappedReader mmapRIndi = new MappedReader(path);// same path as above but not needed
+        // we are reading 4 matrices and 4 vectors files, we add the headers for CVS. First m then v
+
+        // timing for each file read happens in the actual reader (read() method)
+        for (int i = 0; i<4; i++){
+            headerCan.add("MMappedIndi"+tag+"m"+Integer.toString(i));//add matrix header
+        }
+        for (int i = 0; i<4; i++){
+            headerCan.add("MMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
+        }
+
+        //long eMeREInditime = System.nanoTime();
+        // long duration = eMeREInditime-eMeRSInditime;
+        //Log.i("EnerMeREADTImeIndi   - ", Long.toString(duration));
+        return mmapRIndi.read(context,"regMappedIndi"+tag);
     }
 
     private long callReadeneMBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
