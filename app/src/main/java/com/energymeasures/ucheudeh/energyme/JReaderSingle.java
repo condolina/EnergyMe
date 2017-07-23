@@ -24,12 +24,7 @@ public class JReaderSingle extends Reader {
     public JReaderSingle(File path) throws IOException {
         super(path);
         this.mode = "Java_Reader_BigFile";
-        try {
-            this.fc = new FileInputStream(path);//Objectstream requires a stream and not a channel
 
-        } catch (FileNotFoundException e) {
-            Log.e(this.mode," : "+ e.toString());
-        }
     }
 
     public void read()throws IOException, FileNotFoundException {
@@ -71,6 +66,13 @@ public class JReaderSingle extends Reader {
     }
 
     private void readIn() {
+
+        try {
+            this.fc = new FileInputStream(path);//Objectstream requires a stream and not a channel
+
+        } catch (FileNotFoundException e) {
+            Log.e(this.mode," : "+ e.toString());
+        }
 
         int numM = 4; // number of matrix or vectora. Foreknowledge is required here
         int numV = 4; // these can be passed as parameters for each call OR seperatefiles

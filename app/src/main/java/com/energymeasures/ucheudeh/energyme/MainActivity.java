@@ -248,16 +248,16 @@ public class MainActivity extends AppCompatActivity {
             timeStamps.add(callReadeneMMap(context, tag, headerCan));
 */
             // msgP Indi Files
-            timeStamps.addAll(callReadmsgPIndi(context,tag,headerCan));
+           // timeStamps.addAll(callReadmsgPIndi(context,tag,headerCan));
 
             // eneM Indi
             timeStamps.addAll(callReadeneMIndi(context,tag,headerCan));
 
             // jSer Indi
-            timeStamps.addAll(callReadjSerIndi(context,tag,headerCan));
+          //  timeStamps.addAll(callReadjSerIndi(context,tag,headerCan));
 
             //mmapIndi
-            timeStamps.addAll(callReadMMapIndi(context,tag,headerCan));
+          //  timeStamps.addAll(callReadMMapIndi(context,tag,headerCan));
 
   /*
 

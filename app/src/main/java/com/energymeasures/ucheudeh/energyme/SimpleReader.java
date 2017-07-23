@@ -23,18 +23,12 @@ import java.util.ArrayList;
 
 class SimpleReader extends Reader {
 
-    private FileChannel fc; // the Ovberloaded read method does not use this object, but makes multiplstrms
+     // the Ovberloaded read method does not use this object, but makes multiplstrms
 
     SimpleReader(File path) throws IOException {
         super(path);
         this.mode = "Simple_Reader";
-        try {
-           this.fc = new FileInputStream(path).getChannel();
 
-
-        } catch (FileNotFoundException e) {
-            Log.e(this.mode," : "+ e.toString());
-        }
     }
 
     public void read()throws IOException {
@@ -78,7 +72,31 @@ class SimpleReader extends Reader {
 
     }
 
+    public native byte [] nativeRead(String path);
 
+    static {
+        System.loadLibrary("CMessenger");
+    }
+
+
+
+
+    private FileChannel connect(File path){
+
+        FileChannel fc = null;
+
+
+        try {
+            fc = new FileInputStream(path).getChannel();
+            return fc;
+
+
+        } catch (FileNotFoundException e) {
+            Log.e(this.mode," : "+ e.toString());
+        }
+
+        return fc;
+    }
 
     private void readInChunks() throws IOException{
         /*
@@ -86,6 +104,7 @@ class SimpleReader extends Reader {
         size commonly used in many NAND flash brands. It provides a efficient read. The methods
         reads can read any combination of vectors or matrix in a single file.
          */
+        FileChannel fc = connect(path);
 
         int row = 0;
         int column = 0;
@@ -170,7 +189,10 @@ class SimpleReader extends Reader {
 
 
 
-
+    void readInNative() throws IOException{
+        ByteBuffer dataBuff = ByteBuffer.wrap(nativeRead(path.getCanonicalPath()));
+        composerFactory(dataBuff);
+    }
 
 
 
@@ -179,6 +201,8 @@ class SimpleReader extends Reader {
         Get the size of the file and make a buffer to contain the entire File.
          */
         //timeStamps.add(System.nanoTime());//Buffer allocate header start/read data to Buffer_Start
+
+        FileChannel fc = connect(path);
 
 
 
@@ -218,17 +242,20 @@ class SimpleReader extends Reader {
         //timeStamps.add(System.nanoTime());
         for(int i = 0; i<4;i++){
             String filename = basename.concat("m").concat(Integer.toString(i)).concat(".dat");//Basisfilem1.dat
-            fc = context.openFileInput(filename).getChannel();//here open() is executed
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
-            readIn();
+            path = new File (context.getFilesDir(),filename);
+            //readIn();
+            readInNative();
             durations.add(System.nanoTime() - startTime);
         }
 
         for(int i = 0; i<4;i++){
             String filename = basename.concat("v").concat(Integer.toString(i)).concat(".dat");//Basisfilem1.dat
-            fc = context.openFileInput(filename).getChannel();
+
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
-            readIn();
+            path = new File (context.getFilesDir(),filename);
+            //readIn();
+            readInNative();
             durations.add(System.nanoTime() - startTime);
         }
 
