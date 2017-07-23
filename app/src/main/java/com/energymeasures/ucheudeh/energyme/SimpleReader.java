@@ -57,6 +57,10 @@ class SimpleReader extends Reader {
          */
         readInChunks();
 
+        // read Using Native CALL
+
+        //readInNative();
+
 
         //timeStamps.add(System.nanoTime());
         /*
@@ -245,8 +249,8 @@ class SimpleReader extends Reader {
             String filename = basename.concat("m").concat(Integer.toString(i)).concat(".dat");//Basisfilem1.dat
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             path = new File (context.getFilesDir(),filename);
-            //readIn();
-            readInNative();
+            read(); // actual read method selected in read() see comments
+
             durations.add(System.nanoTime() - startTime);
         }
 
@@ -255,8 +259,8 @@ class SimpleReader extends Reader {
 
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             path = new File (context.getFilesDir(),filename);
-            //readIn();
-            readInNative();
+            read();// actual read method selected in read()
+
             durations.add(System.nanoTime() - startTime);
         }
 
