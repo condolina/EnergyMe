@@ -69,8 +69,8 @@ public abstract class Reader {
         while (dataBuff.hasRemaining()) {
 // method calls will be uncommented accordingly to test different factors
             int numRows = dataBuff.getInt();
-            if (numRows == 1)vectorComposer(dataBuff); //matrixVectorComposerFLAT(dataBuff, numRows);
-            else if (numRows > 1) matrixComposer(dataBuff, numRows);//matrixVectorComposerFLAT(dataBuff, numRows);
+            if (numRows == 1)matrixVectorComposerFLAT(dataBuff, numRows);//vectorComposer(dataBuff);
+            else if (numRows > 1) matrixVectorComposerFLAT(dataBuff, numRows);//matrixComposer(dataBuff, numRows);
             else{
                 Log.e("Format Error", "Row =< 0!");
             System.exit(-1);}

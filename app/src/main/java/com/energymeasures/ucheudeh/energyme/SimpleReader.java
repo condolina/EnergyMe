@@ -190,7 +190,8 @@ class SimpleReader extends Reader {
 
 
     void readInNative() throws IOException{
-        ByteBuffer dataBuff = ByteBuffer.wrap(nativeRead(path.getCanonicalPath()));
+        buffArray = nativeRead(path.getCanonicalPath());
+        ByteBuffer dataBuff = ByteBuffer.wrap(buffArray);
         composerFactory(dataBuff);
     }
 
