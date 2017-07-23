@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
 /**
@@ -57,12 +58,22 @@ public class NumericalDataWriter {
         int numVector = numData.getNumVectors();
 
         for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
-            ByteBuffer matrixBuffer = constructMatrix(matrix);
+
+
+            //ByteBuffer matrixBuffer = constructMatrix(matrix);
+
+            //LITTLE ENDIAN
+            ByteBuffer matrixBuffer = constructMatrix(matrix).order(ByteOrder.LITTLE_ENDIAN);
+
             fc.write(matrixBuffer);
         }
 
         for (ArrayRealVector vector : numData.getVectorElements()) {
-            ByteBuffer vectorBuffer = constructVector(vector);
+            //ByteBuffer vectorBuffer = constructVector(vector);
+
+            //LITTLE ENDIAN
+            ByteBuffer vectorBuffer = constructVector(vector).order(ByteOrder.LITTLE_ENDIAN);
+
             fc.write(vectorBuffer);
         }
         Log.i("eneM FileSize : ", Long.toString(fc.size()));
@@ -80,7 +91,12 @@ public class NumericalDataWriter {
             File path = new File ( context.getFilesDir(),basename.concat("m").concat(Integer.toString(i)).concat(".dat"));
             //e.g. regMappedm0.dat
             fc = new FileOutputStream(path).getChannel();// other object gets GC'd
-            ByteBuffer matrixBuffer = constructMatrix(matrix);
+
+            //ByteBuffer matrixBuffer = constructMatrix(matrix);
+
+            //LITTLE ENDIAN
+            ByteBuffer matrixBuffer = constructMatrix(matrix).order(ByteOrder.LITTLE_ENDIAN);
+
             fc.write(matrixBuffer);
             fc.close();
 
@@ -94,7 +110,7 @@ public class NumericalDataWriter {
             File path = new File ( context.getFilesDir(),basename.concat("v").concat(Integer.toString(i)).concat(".dat"));
             //e.g. regMappedv0.dat
             fc = new FileOutputStream(path).getChannel();// other object gets GC'd
-            ByteBuffer vectorBuffer = constructVector(vector);
+            ByteBuffer vectorBuffer = constructVector(vector).order(ByteOrder.LITTLE_ENDIAN);
             fc.write(vectorBuffer);
             fc.close();
 
@@ -109,7 +125,12 @@ public class NumericalDataWriter {
     ByteBuffer constructMatrix(Array2DRowRealMatrix matrix) {
         int rowDim = matrix.getRowDimension();
         int columnDim = matrix.getColumnDimension();
-        ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE));
+        //ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE));
+
+
+        //Little endian buffer. For ENDIANESS EXPERIMENT
+        ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
+
         matrixBuffer.putInt(rowDim).putInt(columnDim);//metadata for this matrix
         double[][] backingMatrix = matrix.getData();
 
@@ -126,7 +147,12 @@ public class NumericalDataWriter {
     ByteBuffer constructVector(ArrayRealVector vector) {
         int rowDim = 1;
         int columnDim = vector.getDimension();
-        ByteBuffer vectorBuffer = ByteBuffer.allocate(columnDim*DOUBLE_SIZE+(2*INT_SIZE));
+        //ByteBuffer vectorBuffer = ByteBuffer.allocate(columnDim*DOUBLE_SIZE+(2*INT_SIZE));
+
+        //Little endian buffer. For ENDIANESS EXPERIMENT
+        ByteBuffer vectorBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
+
+
         vectorBuffer.putInt(rowDim).putInt(columnDim);//metadata for this matrix
         double[] backingArray = vector.toArray();
 

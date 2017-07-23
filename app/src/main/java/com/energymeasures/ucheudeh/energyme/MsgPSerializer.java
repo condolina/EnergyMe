@@ -76,7 +76,7 @@ public class MsgPSerializer extends SerializeMe {
 
             }
 
-            Log.i("MsgPRE First element : ",Double.toString(mat2D.get(0).getEntry(1,1)));
+            //Log.i("MsgPRE First element : ",Double.toString(mat2D.get(0).getEntry(1,1)));
 
 
         } catch (IOException e) {

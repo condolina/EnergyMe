@@ -50,12 +50,12 @@ class SimpleReader extends Reader {
 
 
     // Reads using buffer of same size as file
-        //readIn();
+        readIn();
 
         /*
         Reads using buffers of fixed size that are multiples of the NAND page size e.g 8192
          */
-        readInChunks();
+        //readInChunks();
 
         // read Using Native CALL
 
@@ -212,7 +212,10 @@ class SimpleReader extends Reader {
 
 
         int dBuffSize = (int)fc.size();// only for testing will be passed directly on nextline
-        ByteBuffer dataBuff = getBuffer(dBuffSize);// endianess: choice in Reader method
+        ByteBuffer dataBuff = getBuffer(dBuffSize);
+
+        //Little Endian
+        //ByteBuffer dataBuff = getBuffer(dBuffSize).order(ByteOrder.LITTLE_ENDIAN);// endianess: choice in Reader method
         ////timeStamps.add(System.nanoTime());// buffer allocate main_end/start fill buffer
         fc.read(dataBuff);
         ////timeStamps.add(System.nanoTime());// fill main buffer end

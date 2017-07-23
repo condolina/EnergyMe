@@ -75,10 +75,8 @@ public class MainActivity extends AppCompatActivity {
 
 
 // Block off readonly end point
+
 */
-
-
-
 
 
 
@@ -254,10 +252,10 @@ public class MainActivity extends AppCompatActivity {
             timeStamps.addAll(callReadeneMIndi(context,tag,headerCan));
 
             // jSer Indi
-          //  timeStamps.addAll(callReadjSerIndi(context,tag,headerCan));
+            //timeStamps.addAll(callReadjSerIndi(context,tag,headerCan));
 
             //mmapIndi
-          //  timeStamps.addAll(callReadMMapIndi(context,tag,headerCan));
+            //timeStamps.addAll(callReadMMapIndi(context,tag,headerCan));
 
   /*
 
