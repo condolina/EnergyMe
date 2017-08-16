@@ -23,7 +23,7 @@ import java.util.LinkedHashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-
+    String ex = "NativeFulBufFull"; // modifiy experiment name here to give propername csv file
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,9 +83,10 @@ public class MainActivity extends AppCompatActivity {
 
 
         try {
-            int repeats = 30; // number of read repeats
+            int repeats = 1; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
-            String[] experimentTag = {"dPreamble"};//,"dCore","dBoarder" ,control which group is read with tag
+
+            String[] experimentTag = {"dPreamble","dCore","dBoarder" };//,"dBoarder" ,control which group is read with tag
             for(String tag: experimentTag)
             experimentRead(context, repeats, tag);//
             //cacheCleaner(context);
@@ -180,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
 
          */
 
+
         File file;
 
         if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)!=
@@ -213,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-            file = new File (resultDir,"CSV_"+tag+System.currentTimeMillis()+".csv");
+            file = new File (resultDir,ex+"CSV_"+tag+System.currentTimeMillis()+".csv");
 
 
         }
@@ -371,7 +373,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private long callReadeneMMap(Context context, String tag, ArrayList<String> headerCan) throws IOException {
-        headerCan.add("EnerMeRMmapBigFile");
+        headerCan.add(ex+"EnerMeRMmapBigFile");
         //cacheCleaner(context);
         long eMeRStime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
@@ -393,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
         Read can be called several times on the reader object for this RNDaccesReader. I think this
         is a better use case than asking for all records in the file.
          */
-        headerCan.add("eneM_Rnd_Lazy");
+        headerCan.add(ex+"eneM_Rnd_Lazy");
         //cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndtime = System.nanoTime();
@@ -409,7 +411,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private long callReadeneMRndEarly(Context context, String tag, ArrayList<String> headerCan) throws IOException {
-        headerCan.add("eneM_Rnd_Proactv");
+        headerCan.add(ex+"eneM_Rnd_Proactv");
         //cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndtime = System.nanoTime();
@@ -429,7 +431,7 @@ public class MainActivity extends AppCompatActivity {
         Read can be called several times on the reader object for this RNDaccesReader. I think this
         is a better use case than asking for all records in the file.
          */
-        headerCan.add("eneM_Mmap_Rnd_Lazy");
+        headerCan.add(ex+"eneM_Mmap_Rnd_Lazy");
         //cacheCleaner(context);
         int [] bringList = new int[]{3,0,2};
         long eMeRSRndMmaptime = System.nanoTime();
@@ -454,10 +456,10 @@ public class MainActivity extends AppCompatActivity {
 
         // timing for each file read happens in the actual reader (read() method)
         for (int i = 0; i<4; i++){
-            headerCan.add("regMappedIndi"+tag+"m"+Integer.toString(i));//add matrix header
+            headerCan.add(ex+"regMappedIndi"+tag+"m"+Integer.toString(i));//add matrix header
         }
         for (int i = 0; i<4; i++){
-            headerCan.add("regMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
+            headerCan.add(ex+"regMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
         }
 
         //long eMeREInditime = System.nanoTime();
@@ -476,10 +478,10 @@ public class MainActivity extends AppCompatActivity {
 
         // timing for each file read happens in the actual reader (read() method)
         for (int i = 0; i<4; i++){
-            headerCan.add("MMappedIndi"+tag+"m"+Integer.toString(i));//add matrix header
+            headerCan.add(ex+"MMappedIndi"+tag+"m"+Integer.toString(i));//add matrix header
         }
         for (int i = 0; i<4; i++){
-            headerCan.add("MMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
+            headerCan.add(ex+"MMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
         }
 
         //long eMeREInditime = System.nanoTime();
@@ -490,7 +492,7 @@ public class MainActivity extends AppCompatActivity {
 
     private long callReadeneMBig(Context context, String tag, ArrayList<String> headerCan) throws IOException {
         //cacheCleaner(context);
-        headerCan.add("EnerMeREADTBig");
+        headerCan.add(ex+"EnerMeREADTBig");
         long eMeRStime = System.nanoTime();
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
 

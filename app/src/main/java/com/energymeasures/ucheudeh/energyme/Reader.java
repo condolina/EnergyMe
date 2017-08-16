@@ -71,12 +71,12 @@ public abstract class Reader {
             int numRows = dataBuff.getInt();
 
             //FLAT structure
-            if (numRows == 1)matrixVectorComposerFLAT(dataBuff, numRows);
-            //if (numRows == 1)vectorComposer(dataBuff);
+            //if (numRows == 1)matrixVectorComposerFLAT(dataBuff, numRows);
+            if (numRows == 1)vectorComposer(dataBuff);
 
              //FLAT Structure
-            else if (numRows > 1) matrixVectorComposerFLAT(dataBuff, numRows);
-            //else if (numRows > 1) matrixComposer(dataBuff, numRows);
+            //else if (numRows > 1) matrixVectorComposerFLAT(dataBuff, numRows);
+            else if (numRows > 1) matrixComposer(dataBuff, numRows);
             else{
                 Log.e("Format Error", "Row =< 0!");
             System.exit(-1);}

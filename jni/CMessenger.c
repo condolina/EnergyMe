@@ -12,14 +12,17 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-#define MAXBUF	8192
+
+/* fixed size buffer for c reads*/
+/*#define MAXBUF	8192*/
 
 
 
 JNIEXPORT jbyteArray JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleReader_nativeRead(JNIEnv* env, jobject This,jstring path){
 
         int fd;
-        jbyte buf[MAXBUF];
+        int MAXBUF;
+
         int total_read = 0;
         int byte_read;
         int i =0;
@@ -41,6 +44,14 @@ JNIEXPORT jbyteArray JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleRea
         file_size = stbuf.st_size;
 
         jbyteArray ret = (*env)->NewByteArray(env,file_size);
+
+        /* set read buffer size here*/
+
+        MAXBUF = file_size;
+
+        jbyte buf[MAXBUF];
+
+
 
 
        	while ( (byte_read = read(fd,buf,MAXBUF)) > 0 ){
