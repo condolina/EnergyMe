@@ -1,12 +1,14 @@
 package com.energymeasures.ucheudeh.energyme;
 
 import android.content.Context;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,6 +16,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Random;
+
+
+;
 
 /**
  * Created by ucheudeh on 6/11/17. Java NIO is considered more efficient than Java IO. As such we
@@ -22,8 +28,11 @@ import java.util.ArrayList;
  */
 
 class SimpleReader extends Reader {
+    private int nativeFD=0;
+    int objectCounter =0;
+    ByteBuffer tmp =null;
 
-     // the Ovberloaded read method does not use this object, but makes multiplstrms
+    // the Ovberloaded read method does not use this object, but makes multiplstrms
 
     SimpleReader(File path) throws IOException {
         super(path);
@@ -50,12 +59,12 @@ class SimpleReader extends Reader {
 
 
     // Reads using buffer of same size as file
-        readIn();
+        //readIn();
 
         /*
         Reads using buffers of fixed size that are multiples of the NAND page size e.g 8192
          */
-        //readInChunks();
+        readInChunks(false);
 
         //read Using Native CALL
 
@@ -75,13 +84,12 @@ class SimpleReader extends Reader {
 
 
     }
-
-    public native byte [] nativeRead(String path);
+    public native int nativeRead(int fd, ByteBuffer buf,int count,int offset, int bufOffset);
+    //public native byte [] nativeRead(String path);
 
     static {
         System.loadLibrary("CMessenger");
     }
-
 
 
 
@@ -102,13 +110,14 @@ class SimpleReader extends Reader {
         return fc;
     }
 
-    private void readInChunks() throws IOException{
+    private void readInChunks(boolean i) throws IOException{
         /*
         This method reads with a smaller fixed buffer size. 2048 Bytes is chosen due to the page
         size commonly used in many NAND flash brands. It provides a efficient read. The methods
         reads can read any combination of vectors or matrix in a single file.
          */
         FileChannel fc = connect(path);
+        boolean sw =i;
 
         int row = 0;
         int column = 0;
@@ -117,20 +126,21 @@ class SimpleReader extends Reader {
         final int HEADER = 8;
 
 
-        byte [] bufBack = new byte[8192];
+        byte [] bufBack = new byte[6144];
 
-        //ByteBuffer buf = ByteBuffer.wrap(bufBack).order(ByteOrder.LITTLE_ENDIAN);
-        //ByteBuffer buf = ByteBuffer.wrap(bufBack);// shown by experiment to be the a good mark
+
+        ByteBuffer buf = ByteBuffer.wrap(bufBack);// shown by experiment to be the a good mark
         // beyond which performance flattens see David Nadeau'S EXPERIMENT
-        ByteBuffer buf = ByteBuffer.allocateDirect(8192); // direct buffer implementation
-        //ByteBuffer buf = ByteBuffer.allocateDirect(8192).order(ByteOrder.LITTLE_ENDIAN); // little end direct buffer implementation
-
-        int rCount,bCount;
+        //ByteBuffer buf = ByteBuffer.allocateDirect(2048); // direct buffer implementation
+        //ByteBuffer buf = ByteBuffer.allocate(8192)
+        int rCount,bCount,inBytes = 0;
         double [] vector = null;
         double [][] matrix = null;
 
-        while((rCount= fc.read(buf) )!=-1) {
+       // while((rCount= fc.read(buf) )!=-1) { //normal read
+        while((rCount=readInNative(buf,inBytes))!=-1){//nativeRead
             if (rCount == 0) break;// Optimize this line, extra IO just to get file end!
+            inBytes+=rCount;
             buf.flip();
             while (buf.hasRemaining()) {
                 if(buf.remaining()<HEADER) {
@@ -170,11 +180,15 @@ class SimpleReader extends Reader {
                         k++;
                     }
                     if (k == (column * row)) {
-                        matriceTable.add(new Array2DRowRealMatrix(matrix));
+                        //matriceTable.add(new Array2DRowRealMatrix(matrix));
                         k = 0;
                         row = 0;
                         column = 0;
                         matrix = null;
+                        objectCounter++;
+                        if(sw){
+                            break;
+                        }
                     }
 
                     } else {
@@ -183,22 +197,49 @@ class SimpleReader extends Reader {
                     }
 
 
+
                 }
                 buf.compact();
 
             }
 
 
+
         }
 
 
 
-    void readInNative() throws IOException{
-        buffArray = nativeRead(path.getCanonicalPath());
-        ByteBuffer dataBuff = ByteBuffer.wrap(buffArray);
-        composerFactory(dataBuff);
+    int readInNative( ByteBuffer buf, int offset) throws IOException{
+        // from the calling method, Offset it the size of the already read bytes returned previously
+        if (nativeFD == 0)setNativeFD();
+        int pos = buf.position();
+        int lim = buf.limit();
+        int rem = (pos <= lim?lim - pos: 0);
+        if(buf.isDirect() ) {
+            return nativeRead(nativeFD, buf, rem, offset,pos);
+        }
+        else{
+            if (tmp == null){
+                tmp = ByteBuffer.allocateDirect(buf.capacity());
+            }
+
+            int byteRead = nativeRead(nativeFD, tmp, rem, offset,pos);
+            if (byteRead>0){
+                //tmp.flip();
+                buf.put(tmp);
+            }
+
+           return byteRead;
+        }
+        //buffArray = nativeRead(path.getCanonicalPath());
+        //buffArray = nativeRead(path.getCanonicalPath());
+        //ByteBuffer dataBuff = ByteBuffer.wrap(buffArray);
+        //composerFactory(dataBuff);
     }
 
+    private void setNativeFD() throws FileNotFoundException {
+        nativeFD = ParcelFileDescriptor.open(path, ParcelFileDescriptor.MODE_READ_ONLY).getFd();
+    }
 
 
     void readIn() throws IOException {
@@ -249,16 +290,21 @@ class SimpleReader extends Reader {
 
         //timeStamps.add(System.nanoTime());
         for(int i = 0; i<4;i++){
-            String filename = basename.concat("m").concat(Integer.toString(i)).concat(".dat");//Basisfilem1.dat
+            //For 2k experiment we generate a random file selector between 0 and 3 inclusive.
+            int k = getSelector(); //returns a random integer [0-3]
+            String filename = basename.concat("m").concat(Integer.toString(k)).concat(".dat");//Basisfilem1.dat or 2kExpD_10_m2.dat
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             path = new File (context.getFilesDir(),filename);
-            read(); // actual read method selected in read() see comments
+            readInChunks(true); // actual read method selected in read() see comments
 
             durations.add(System.nanoTime() - startTime);
-        }
 
+
+        }
+/*
         for(int i = 0; i<4;i++){
-            String filename = basename.concat("v").concat(Integer.toString(i)).concat(".dat");//Basisfilem1.dat
+            int k = getSelector();
+            String filename = basename.concat("v").concat(Integer.toString(k)).concat(".dat");//Basisfilem1.dat
 
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             path = new File (context.getFilesDir(),filename);
@@ -267,7 +313,7 @@ class SimpleReader extends Reader {
             durations.add(System.nanoTime() - startTime);
         }
 
-
+*/
 
 
 
@@ -287,5 +333,13 @@ class SimpleReader extends Reader {
 
 
         return durations;
+    }
+
+    private int getSelector() {
+        int k =0;
+        Random ran = new Random();
+        k = ran.nextInt(4)+0;// min:0, max:3
+        if(k==4)k=3;
+        return k;
     }
 }

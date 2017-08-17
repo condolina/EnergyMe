@@ -25,6 +25,8 @@ class SnapshotsBasket {
     private ArrayRealVector[] vectorElements;
     private String groupType;
 
+    int [] boundLims = new int []{1,2,7,5,9,10,20,13};// the intergers will form the upperbound
+
     /**
      * Default Constructor makes 4 matrix 100X 100 and fills them with random number 0-5
      * and 4 RealVectors in ArrayForm  
@@ -52,8 +54,9 @@ class SnapshotsBasket {
             int size = (int)Math.pow(2,ints[i]);
             if(size <=0){size = 2;}
 
-            this.matrixElements[i] = UtilityC.fillMatrix(new Array2DRowRealMatrix(size,size), 3);
-            this.vectorElements[i] = UtilityC.fillVector(new ArrayRealVector(size * size), 1);
+
+            this.matrixElements[i] = UtilityC.fillMatrix(new Array2DRowRealMatrix(size,size), boundLims[i]);
+            this.vectorElements[i] = UtilityC.fillVector(new ArrayRealVector(size * size), boundLims[i]);
         }
             
         

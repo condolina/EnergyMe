@@ -23,7 +23,8 @@ import java.util.LinkedHashMap;
 
 public class MainActivity extends AppCompatActivity {
 
-    String ex = "NativeFulBufFull"; // modifiy experiment name here to give propername csv file
+    String [] exArr = new String[]{"A","B","C","D","E","F","G","H"}; // modifiy experiment name here to give propername csv file
+    String ex = "O";//exArr[4];
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,12 +32,25 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         String message = "Testing in progress. Results are being generated ";
 
+       // Run some unitilities to find page size and block size
+
+
+        // find page Size and block size
+
+/*
+        File path = Environment.getDataDirectory();
+        android.os.StatFs stat = new android.os.StatFs(path.getPath());
+        long blockSize = stat.getBlockSizeLong();
+        message = Long.toString(blockSize);
+
+*/
+
         TextView textView = new TextView(this);
         textView.setText(message);
         setContentView(textView);
 
 
-        Log.i("EnergyMe", "Commencing Data creation");
+        Log.i("EnergyMe", message);
 
         //matrices and vectors are constructed 2exp(x)*2exp(x) entries. matrix and be manually fixed
         // On some devices making this CORE(8), BOARDER, EXTREME, INSANE may not be possible due to
@@ -50,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        dbanke.put("dPreamble",new int[]{1,2,3,4});//largest matrix/vector has 256 doubles : PRE_AMBLE
+        dbanke.put("dPreamble",new int[]{8,8,8,8});//{1,2,3,4}largest matrix/vector has 256 doubles : PRE_AMBLE
        // dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65,536 doubles: CORE
         //The following groups are padded with 1s, to give a uniform structure in the "big" read
        // dbanke.put("dBoarder",new int[]{1,1,9,10});//largest matrix/vector has 1,048,576 doubles : BOARDER
@@ -80,25 +94,31 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
+// block the following try block for  write only
 
         try {
-            int repeats = 1; // number of read repeats
+            int repeats = 15; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
 
-            String[] experimentTag = {"dPreamble","dCore","dBoarder" };//,"dBoarder" ,control which group is read with tag
+            String[] experimentTag = {"dPreamble" };//,"dCore","dBoarder","dBoarder" ,control which group is read with tag
             for(String tag: experimentTag)
+
             experimentRead(context, repeats, tag);//
             //cacheCleaner(context);
-            //System.gc();
+            System.gc();
+            // try {
+            //Thread.sleep(100);
+
 
         } catch (IOException e) {
             Log.e("ExperimentWrite","IOerror at File creation" + e.toString());
+
         }
 
         message = "Test now completed. Results are in the respective CSV files";
-        textView.setText(message);
-        setContentView(textView);
+      textView.setText(message);
+      setContentView(textView);
+
 
 
 
@@ -118,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
         (ref: https://shipilev.net/blog/2014/nanotrusting-nanotime/#_granularity).
          */
 
-/*
+
         //eneM: Simple and MMAP Test Files Big and Indi Files
         NumericalDataWriter regMapW = new NumericalDataWriter(context);
         long eMeWStime = System.nanoTime();
@@ -127,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
 
         long eMeWEtime = System.nanoTime();
         Log.i("EnerMeWriteTIme-", Long.toString(eMeWEtime-eMeWStime));
-
+/*
 
         // eneM: Random Access Test Files
         RandomAccessNumericalDataWriter regMapWRnd = new RandomAccessNumericalDataWriter(context);
@@ -149,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         long jWEtime = System.nanoTime();
         Log.i("Java SerWriteTIme-", Long.toString(jWEtime-jWStime));
 
-*/
+
 
         // msgPWriter (Big and Indi files)
 
@@ -166,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
-
+*/
 
 
     }
@@ -232,6 +252,7 @@ public class MainActivity extends AppCompatActivity {
          */
         ArrayList<Long> timeStamps;
         for (int i=0; i<repeats;i++) {
+
 
             timeStamps = new ArrayList<>();// will be written out to CVS later
 /*
@@ -465,7 +486,8 @@ public class MainActivity extends AppCompatActivity {
         //long eMeREInditime = System.nanoTime();
        // long duration = eMeREInditime-eMeRSInditime;
         //Log.i("EnerMeREADTImeIndi   - ", Long.toString(duration));
-        return regMapRIndi.read(context,"regMappedIndi"+tag);
+       // return regMapRIndi.read(context,"regMappedIndi"+tag);
+        return regMapRIndi.read(context,"2kExpD_10_");
     }
 
     private ArrayList<Long> callReadMMapIndi(Context context, String tag, ArrayList<String> headerCan) throws IOException {

@@ -18,43 +18,64 @@
 
 
 
-JNIEXPORT jbyteArray JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleReader_nativeRead(JNIEnv* env, jobject This,jstring path){
+JNIEXPORT jint JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleReader_nativeRead(JNIEnv* env, jobject This,jint fdo, jobject buf, jint len,jint offset, jint bufOffset) {
 
-        int fd;
-        int MAXBUF;
+    int _fd;
+    int MAXBUF;
 
-        int total_read = 0;
-        int byte_read;
-        int i =0;
-        off_t file_size;
-        struct stat stbuf;
+    int total_read = 0;
+    int byte_read;
+    int i = 0;
+    off_t file_size;
+    struct stat stbuf;
+    jbyte *buff_in;
 
 
+    _fd = (int) fdo;
 
-        const char *path_ = (*env)->GetStringUTFChars(env,path, 0);
-       if ((fd = open(path_,O_RDONLY)) < 0) {
-       		printf("%s: cannot open %s\n", "Cmessenger",path);// send exeption to java
-       		exit(2);
-       	}
-        if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode))) {
-        printf("%s: cannot determine file _size %s\n", "Cmessenger",path);// send exeption to java
-        exit(4);
-        }
+    int _offset = (int) offset;
+    buff_in = (*env)->GetDirectBufferAddress(env, buf);
+    int _len = (int) len;
+    int _bufOffset = (int) bufOffset;
+    /*  const char *path_ = (*env)->GetStringUTFChars(env,path, 0);
+     if ((fd = open(path_,O_RDONLY)) < 0) {
+             printf("%s: cannot open %s\n", "Cmessenger",path);// send exeption to java
+             exit(2);
+         }
+      if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode))) {
+      printf("%s: cannot determine file _size %s\n", "Cmessenger",path);// send exeption to java
+      exit(4);
+      }
 
-        file_size = stbuf.st_size;
+
+*/
+
+
+    int retAdv = posix_fadvise(_fd, _offset, -len, POSIX_FADV_SEQUENTIAL);
+    if (retAdv == -1) {
+        printf("posix_fadvise");
+    }
+    if (_offset==0){
+        int count = read(_fd, buff_in+_bufOffset, _len);
+        return count;
+    }else {
+        int count =pread(_fd, buff_in + _bufOffset, _len, _offset);
+        return count;
+    }
+}
+       /* file_size = stbuf.st_size;
 
         jbyteArray ret = (*env)->NewByteArray(env,file_size);
 
-        /* set read buffer size here*/
+         /*set read buffer size here
 
-        MAXBUF = file_size;
+        MAXBUF = 2048;
+
+        /*MAXBUF = file_size;
 
         jbyte buf[MAXBUF];
 
-
-
-
-       	while ( (byte_read = read(fd,buf,MAXBUF)) > 0 ){
+        while ( (byte_read = read(fd,buf,MAXBUF)) > 0 ){
 
 
        		    (*env)->SetByteArrayRegion(env,ret, (i*MAXBUF), byte_read, buf);//seting byte array region
@@ -73,6 +94,11 @@ JNIEXPORT jbyteArray JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleRea
        	}
        	return ret;
        }
+
+*/
+
+
+
 
 
 

@@ -45,7 +45,7 @@ public class NumericalDataWriter {
 
     void write(SnapshotsBasket numData) throws IOException {
 
-        writeBig(numData);
+       // writeBig(numData);
         writeIndi(numData);
     }
 
@@ -84,18 +84,19 @@ public class NumericalDataWriter {
     }
     void writeIndi(SnapshotsBasket numData)throws IOException{
 
-        // a new file per record
-        String basename = mode+"Indi"+numData.getGroupType();
+        // a new file per record. First basename for 2k Experiment. The second for normal experiments
+        String basename = "2kExpD_10_"; // 2k experiment D=10 matrix. D=10 => 2^10 x 2^10 (1024x1024)
+        //String basename = mode+"Indi"+numData.getGroupType();
         int i =0;
         for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
             File path = new File ( context.getFilesDir(),basename.concat("m").concat(Integer.toString(i)).concat(".dat"));
-            //e.g. regMappedm0.dat
+            //e.g. regMappedm0.dat, or 2kExpD_10_m0.dat
             fc = new FileOutputStream(path).getChannel();// other object gets GC'd
 
-            //ByteBuffer matrixBuffer = constructMatrix(matrix);
+            ByteBuffer matrixBuffer = constructMatrix(matrix);
 
             //LITTLE ENDIAN
-            ByteBuffer matrixBuffer = constructMatrix(matrix).order(ByteOrder.LITTLE_ENDIAN);
+            //ByteBuffer matrixBuffer = constructMatrix(matrix).order(ByteOrder.LITTLE_ENDIAN);
 
             fc.write(matrixBuffer);
             fc.close();
@@ -108,9 +109,9 @@ public class NumericalDataWriter {
         i =0; // reinitialized
         for (ArrayRealVector vector : numData.getVectorElements()) {
             File path = new File ( context.getFilesDir(),basename.concat("v").concat(Integer.toString(i)).concat(".dat"));
-            //e.g. regMappedv0.dat
+            //e.g. regMappedv0.dat or 2kExpD_10_v0.dat
             fc = new FileOutputStream(path).getChannel();// other object gets GC'd
-            ByteBuffer vectorBuffer = constructVector(vector).order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer vectorBuffer = constructVector(vector);
             fc.write(vectorBuffer);
             fc.close();
 
@@ -125,11 +126,11 @@ public class NumericalDataWriter {
     ByteBuffer constructMatrix(Array2DRowRealMatrix matrix) {
         int rowDim = matrix.getRowDimension();
         int columnDim = matrix.getColumnDimension();
-        //ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE));
+        ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE));
 
 
         //Little endian buffer. For ENDIANESS EXPERIMENT
-        ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
+        //ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
 
         matrixBuffer.putInt(rowDim).putInt(columnDim);//metadata for this matrix
         double[][] backingMatrix = matrix.getData();
@@ -147,10 +148,10 @@ public class NumericalDataWriter {
     ByteBuffer constructVector(ArrayRealVector vector) {
         int rowDim = 1;
         int columnDim = vector.getDimension();
-        //ByteBuffer vectorBuffer = ByteBuffer.allocate(columnDim*DOUBLE_SIZE+(2*INT_SIZE));
+        ByteBuffer vectorBuffer = ByteBuffer.allocate(columnDim*DOUBLE_SIZE+(2*INT_SIZE));
 
         //Little endian buffer. For ENDIANESS EXPERIMENT
-        ByteBuffer vectorBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
+        //ByteBuffer vectorBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
 
 
         vectorBuffer.putInt(rowDim).putInt(columnDim);//metadata for this matrix
