@@ -24,7 +24,7 @@ import java.util.LinkedHashMap;
 public class MainActivity extends AppCompatActivity {
 
     String [] exArr = new String[]{"A","B","C","D","E","F","G","H"}; // modifiy experiment name here to give propername csv file
-    String ex = "O";//exArr[4];
+    String ex = "L";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 /*
         File path = Environment.getDataDirectory();
         android.os.StatFs stat = new android.os.StatFs(path.getPath());
-        long blockSize = stat.getBlockSizeLong();
+        long blockSize = stat.getBlockSizeLong();det
         message = Long.toString(blockSize);
 
 */
@@ -93,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
 */
 
 
-
 // block the following try block for  write only
 
         try {
@@ -105,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
 
             experimentRead(context, repeats, tag);//
             //cacheCleaner(context);
-            System.gc();
+            //System.gc();
             // try {
             //Thread.sleep(100);
 
@@ -118,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
         message = "Test now completed. Results are in the respective CSV files";
       textView.setText(message);
       setContentView(textView);
+        exit();
 
 
 
@@ -250,11 +250,12 @@ public class MainActivity extends AppCompatActivity {
         Time log begins when the read method is called on the Reader (INTERNAL VALIDATION)
 
          */
-        ArrayList<Long> timeStamps;
+        //ArrayList<Long> timeStamps;
         for (int i=0; i<repeats;i++) {
+            ArrayList<Long> timeStamps = new ArrayList<>();// will be written out to CVS later
 
 
-            timeStamps = new ArrayList<>();// will be written out to CVS later
+            //timeStamps = new ArrayList<>();// will be written out to CVS later
 /*
             // eneM Single File (Contains matrices and vectors)
             timeStamps.add(callReadeneMBig(context, tag, headerCan));
@@ -294,14 +295,19 @@ public class MainActivity extends AppCompatActivity {
             if (i==0){// after first iteration write CSV file headers
                 String [] headers = new String [headerCan.size()];
                 headers = headerCan.toArray(headers);
-                results.writeNext(headers);
+                //results.writeNext(headers);
+            }
+
+            for(String s: long2String(timeStamps)){
+                results.writeNext(new String[]{s});
             }
 
 
 
-            results.writeNext(long2String(timeStamps));
+            //results.writeNext(long2String(timeStamps));
 
         }
+        //results.writeNext(long2String(timeStamps));
         results.flush();
         results.close();
         Log.i("Energy_Measures", "Experiment Complete: Check"+file.toString()+"for the CSV files");
@@ -572,8 +578,13 @@ public class MainActivity extends AppCompatActivity {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);
     }
-   
-   
+
+    public void exit()
+    {
+
+        android.os.Process.killProcess(android.os.Process.myPid());
+        //System.exit(0);
+    }
 
 
 }

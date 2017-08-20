@@ -50,11 +50,12 @@ JNIEXPORT jint JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleReader_na
 
 */
 
-
+/*
     int retAdv = posix_fadvise(_fd, _offset, -len, POSIX_FADV_SEQUENTIAL);
     if (retAdv == -1) {
         printf("posix_fadvise");
     }
+*/
     if (_offset==0){
         int count = read(_fd, buff_in+_bufOffset, _len);
         return count;

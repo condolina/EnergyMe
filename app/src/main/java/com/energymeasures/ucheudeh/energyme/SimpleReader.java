@@ -29,7 +29,7 @@ import java.util.Random;
 
 class SimpleReader extends Reader {
     private int nativeFD=0;
-    int objectCounter =0;
+    //int objectCounter =0;
     ByteBuffer tmp =null;
 
     // the Ovberloaded read method does not use this object, but makes multiplstrms
@@ -64,7 +64,7 @@ class SimpleReader extends Reader {
         /*
         Reads using buffers of fixed size that are multiples of the NAND page size e.g 8192
          */
-        readInChunks(false);
+        readInChunks(false);//
 
         //read Using Native CALL
 
@@ -110,7 +110,7 @@ class SimpleReader extends Reader {
         return fc;
     }
 
-    private void readInChunks(boolean i) throws IOException{
+    private int readInChunks(boolean i) throws IOException{//
         /*
         This method reads with a smaller fixed buffer size. 2048 Bytes is chosen due to the page
         size commonly used in many NAND flash brands. It provides a efficient read. The methods
@@ -126,19 +126,25 @@ class SimpleReader extends Reader {
         final int HEADER = 8;
 
 
-        byte [] bufBack = new byte[6144];
+        //byte [] bufBack = new byte[6144];
+        byte [] bufBack = new byte[2048];
 
 
         ByteBuffer buf = ByteBuffer.wrap(bufBack);// shown by experiment to be the a good mark
         // beyond which performance flattens see David Nadeau'S EXPERIMENT
+        //ByteBuffer buf = ByteBuffer.allocateDirect(6144); // direct buffer implementation
         //ByteBuffer buf = ByteBuffer.allocateDirect(2048); // direct buffer implementation
+
         //ByteBuffer buf = ByteBuffer.allocate(8192)
         int rCount,bCount,inBytes = 0;
         double [] vector = null;
         double [][] matrix = null;
+        int sysCalls =1; // set to 1 due to extra call that returned EoF.
 
-       // while((rCount= fc.read(buf) )!=-1) { //normal read
+       //while((rCount= fc.read(buf) )!=-1) { //normal read
         while((rCount=readInNative(buf,inBytes))!=-1){//nativeRead
+            //sysCalls++;
+
             if (rCount == 0) break;// Optimize this line, extra IO just to get file end!
             inBytes+=rCount;
             buf.flip();
@@ -185,7 +191,7 @@ class SimpleReader extends Reader {
                         row = 0;
                         column = 0;
                         matrix = null;
-                        objectCounter++;
+                        //objectCounter++;
                         if(sw){
                             break;
                         }
@@ -204,8 +210,8 @@ class SimpleReader extends Reader {
             }
 
 
-
-        }
+        return sysCalls;
+    }
 
 
 
@@ -293,9 +299,10 @@ class SimpleReader extends Reader {
             //For 2k experiment we generate a random file selector between 0 and 3 inclusive.
             int k = getSelector(); //returns a random integer [0-3]
             String filename = basename.concat("m").concat(Integer.toString(k)).concat(".dat");//Basisfilem1.dat or 2kExpD_10_m2.dat
+            //Log.i("read","starting");
             Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
             path = new File (context.getFilesDir(),filename);
-            readInChunks(true); // actual read method selected in read() see comments
+            int readSysCalls =  readInChunks(true); // actual read method selected in read() see comments
 
             durations.add(System.nanoTime() - startTime);
 
