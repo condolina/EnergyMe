@@ -8,14 +8,13 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 
@@ -28,11 +27,13 @@ import java.util.Random;
  */
 
 class SimpleReader extends Reader {
+    final int PAGE_SIZE =4096;
+    final double MAGIC_RATIO = 0.00003232;
     private int nativeFD=0;
     //int objectCounter =0;
     ByteBuffer tmp =null;
 
-    // the Ovberloaded read method does not use this object, but makes multiplstrms
+    // the Overloaded read method does not use this object, but makes multiplstrms
 
     SimpleReader(File path) throws IOException {
         super(path);
@@ -40,46 +41,18 @@ class SimpleReader extends Reader {
 
     }
 
-    public void read()throws IOException {
+    public void read(Context context, String s)throws IOException {
 
 
-        /*
-        Assumption here is that it is possible to create a Reader without actually reading anything
-        Time log begins when the read method is called on the Reader (INTERNAL VALIDATION)
 
-        TODO Send start trigger to Power tool
+    //Reads using buffer of same size as file
+        readIn();
 
 
-         */
-
-        //startTime = System.nanoTime();// It is instructive to place the start time here b4 readIn().
 
 
-        //timeStamps.add(System.nanoTime());
 
 
-    // Reads using buffer of same size as file
-        //readIn();
-
-        /*
-        Reads using buffers of fixed size that are multiples of the NAND page size e.g 8192
-         */
-        readInChunks(false);//
-
-        //read Using Native CALL
-
-        //readInNative();
-
-
-        //timeStamps.add(System.nanoTime());
-        /*
-        TODO: Send Stop Trigger to power tool
-
-        norm the CVSWriter for now
-        csvWriter2File();
-         */
-
-        //Log.i("EneM First element : ",Double.toString(this.getFirstMatrix().getEntry(1,1)));
 
 
 
@@ -110,40 +83,40 @@ class SimpleReader extends Reader {
         return fc;
     }
 
-    private int readInChunks(boolean i) throws IOException{//
-        /*
-        This method reads with a smaller fixed buffer size. 2048 Bytes is chosen due to the page
-        size commonly used in many NAND flash brands. It provides a efficient read. The methods
-        reads can read any combination of vectors or matrix in a single file.
-         */
+    private int readInChunks(boolean clustering, int direct, int bufSize, int readMode) throws IOException{//
+
         FileChannel fc = connect(path);
-        boolean sw =i;
+        int fileSize = (int)fc.size();
+        bufSize=getBufSize(fileSize); // get magic buffer Size
+
 
         int row = 0;
         int column = 0;
         int k = 0;
         final int DOUBLE = 8;
         final int HEADER = 8;
+        ByteBuffer buf=null;
+        byte [] bufBack=null;
 
+        if(direct == 1){
+            buf = ByteBuffer.allocateDirect(bufSize);
+        }else {
+            bufBack = new byte[bufSize];
+            buf = ByteBuffer.wrap(bufBack);
 
-        //byte [] bufBack = new byte[6144];
-        byte [] bufBack = new byte[2048];
+        }
 
-
-        ByteBuffer buf = ByteBuffer.wrap(bufBack);// shown by experiment to be the a good mark
-        // beyond which performance flattens see David Nadeau'S EXPERIMENT
-        //ByteBuffer buf = ByteBuffer.allocateDirect(6144); // direct buffer implementation
-        //ByteBuffer buf = ByteBuffer.allocateDirect(2048); // direct buffer implementation
-
-        //ByteBuffer buf = ByteBuffer.allocate(8192)
         int rCount,bCount,inBytes = 0;
         double [] vector = null;
         double [][] matrix = null;
-        int sysCalls =1; // set to 1 due to extra call that returned EoF.
+        int sysCallsCount =1; // set to 1 due to extra call that returned EoF.
+        boolean doneRead = false; // consider optimizatin to Bitfield
+
+
 
        //while((rCount= fc.read(buf) )!=-1) { //normal read
         while((rCount=readInNative(buf,inBytes))!=-1){//nativeRead
-            //sysCalls++;
+            sysCallsCount++;
 
             if (rCount == 0) break;// Optimize this line, extra IO just to get file end!
             inBytes+=rCount;
@@ -172,7 +145,11 @@ class SimpleReader extends Reader {
                         k=0;
                         row =0;
                         column = 0;
-                        vector=null;
+
+                        if(!clustering){
+                            doneRead = true;
+                            break; // if single file reading stop here all bytes read.
+                        }
                     };
                 }else if (row > 1) {
 
@@ -186,14 +163,15 @@ class SimpleReader extends Reader {
                         k++;
                     }
                     if (k == (column * row)) {
-                        //matriceTable.add(new Array2DRowRealMatrix(matrix));
+                        matriceTable.add(new Array2DRowRealMatrix(matrix));
                         k = 0;
                         row = 0;
                         column = 0;
-                        matrix = null;
+
                         //objectCounter++;
-                        if(sw){
-                            break;
+                        if(!clustering){
+                            doneRead = true;
+                            break; // if single file reading stop here all bytes read.
                         }
                     }
 
@@ -205,14 +183,21 @@ class SimpleReader extends Reader {
 
 
                 }
+                if (doneRead)break;; // saves on syscall add for bulk later ||inBytes==fileSizes
                 buf.compact();
 
             }
 
 
-        return sysCalls;
+        return sysCallsCount; // or bytes read
     }
 
+    private int getBufSize(int fileSize) {
+        // pagesize is a constant 4096 for ANDROID, WE FOUND OUT IN THE MAIN_Activity once
+        int magicBufSize;
+        magicBufSize = ((int)(fileSize*MAGIC_RATIO-1.28915))*PAGE_SIZE ; // obtained after developing prediction model ffrom regression tests.
+        return magicBufSize;
+    }
 
 
     int readInNative( ByteBuffer buf, int offset) throws IOException{
@@ -237,10 +222,7 @@ class SimpleReader extends Reader {
 
            return byteRead;
         }
-        //buffArray = nativeRead(path.getCanonicalPath());
-        //buffArray = nativeRead(path.getCanonicalPath());
-        //ByteBuffer dataBuff = ByteBuffer.wrap(buffArray);
-        //composerFactory(dataBuff);
+
     }
 
     private void setNativeFD() throws FileNotFoundException {
@@ -261,88 +243,54 @@ class SimpleReader extends Reader {
         int dBuffSize = (int)fc.size();// only for testing will be passed directly on nextline
         ByteBuffer dataBuff = getBuffer(dBuffSize);
 
-        //Little Endian
-        //ByteBuffer dataBuff = getBuffer(dBuffSize).order(ByteOrder.LITTLE_ENDIAN);// endianess: choice in Reader method
-        ////timeStamps.add(System.nanoTime());// buffer allocate main_end/start fill buffer
+
         fc.read(dataBuff);
-        ////timeStamps.add(System.nanoTime());// fill main buffer end
+
         fc.close();
         dataBuff.flip();
-        //timeStamps.add(System.nanoTime());//Read Data to buffer_end
-
-
         composerFactory(dataBuff);
 
 
     }
 
-    public ArrayList<Long> read(Context context, String basename)throws IOException {
+    public ExpBox read(Context context, String basename, List<String[]> replicate, boolean clustering)throws IOException {
         ArrayList<Long> durations = new ArrayList<>();
-
-
-        /*
-        This method takes a basefile name and reads individual files by calling the readIn method.
-        Each time setting fc to the new filechannel.
-        Assumption here is that it is possible to create a Reader without actually reading anything
-        Time log begins when the read method is called on the Reader (INTERNAL VALIDATION)
-
-        TODO Send start trigger to Power tool
-
-
-         */
-
-        //.
-
-
-        //timeStamps.add(System.nanoTime());
-        for(int i = 0; i<4;i++){
-            //For 2k experiment we generate a random file selector between 0 and 3 inclusive.
-            int k = getSelector(); //returns a random integer [0-3]
-            String filename = basename.concat("m").concat(Integer.toString(k)).concat(".dat");//Basisfilem1.dat or 2kExpD_10_m2.dat
-            //Log.i("read","starting");
-            Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
-            path = new File (context.getFilesDir(),filename);
-            int readSysCalls =  readInChunks(true); // actual read method selected in read() see comments
-
-            durations.add(System.nanoTime() - startTime);
-
-
-        }
-/*
-        for(int i = 0; i<4;i++){
-            int k = getSelector();
-            String filename = basename.concat("v").concat(Integer.toString(k)).concat(".dat");//Basisfilem1.dat
-
-            Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
-            path = new File (context.getFilesDir(),filename);
-            read();// actual read method selected in read()
-
-            durations.add(System.nanoTime() - startTime);
-        }
-
-*/
-
+        ArrayList<String> headers = new ArrayList<>();
 
 
 
 
         //timeStamps.add(System.nanoTime());
-        /*
-        TODO: Send Stop Trigger to power tool
+        for (String [] exp: replicate) {
+            int bufSize = Integer.parseInt(exp[4]);
+            int direct = Integer.parseInt(exp[3]);
+            int readMode = Integer.parseInt(exp[5]);
 
-        norm the CVSWriter for now
-        csvWriter2File();
-         */
+            //for (int i = 0; i < 4; i++) {
+                //For 2k experiment we generate a random file selector between 0 and 3 inclusive.
+                int k = getSelector(); //returns a random integer [0-3]
+            //String filename = "regMappedIndidCorem3".concat(".dat");
+            String filename = basename.concat(exp[2]+"m").concat(Integer.toString(k)).concat(".dat");//Basisfilem1.dat or 2kExpD_10_m2.dat
+                //Log.i("read","starting");
+                Long startTime = System.nanoTime();//here b4 readIn(). Not measuring open().
+                path = new File(context.getFilesDir(), filename);
+                int readBytes = readInChunks(clustering, direct, bufSize, readMode); // actual read method selected in read() see comments
 
-        //Log.i("EneM First element : ",Double.toString(this.getFirstMatrix().getEntry(1,1)));
-        // Convert Long arraylist to String Array
+
+                durations.add(System.nanoTime() - startTime);
+                String header = exp[1] + exp[2] + "_" + exp[4] + "_" + "D" + exp[3] + "N" + exp[5];
+
+                headers.add(header);
 
 
+            //}
+            exp[0]= "0"; // mark as done
+        }
 
-        return durations;
+        return new ExpBox(durations,replicate,headers);
     }
 
-    private int getSelector() {
+    int getSelector() {
         int k =0;
         Random ran = new Random();
         k = ran.nextInt(4)+0;// min:0, max:3

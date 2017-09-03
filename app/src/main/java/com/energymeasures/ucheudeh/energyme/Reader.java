@@ -24,7 +24,7 @@ public abstract class Reader {
     ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<>();
     ArrayList<ArrayRealVector> vectorTable = new ArrayList<>();
     final int DOUBLE_SIZE = 8;
-    ArrayList<FlatArray2DRowRealMatrix> matriceTableFLAT = new ArrayList<>();
+    ArrayList<Flatmatrix> matriceTableFLAT = new ArrayList<>();
     ArrayList<FlatArrayRealVector> vectorTableFLAT = new ArrayList<>();
     byte [] buffArray = null;
 
@@ -71,12 +71,12 @@ public abstract class Reader {
             int numRows = dataBuff.getInt();
 
             //FLAT structure
-            //if (numRows == 1)matrixVectorComposerFLAT(dataBuff, numRows);
-            if (numRows == 1)vectorComposer(dataBuff);
+            if (numRows == 1)matrixVectorComposerFLAT(dataBuff, numRows);
+            //if (numRows == 1)vectorComposer(dataBuff);
 
              //FLAT Structure
-            //else if (numRows > 1) matrixVectorComposerFLAT(dataBuff, numRows);
-            else if (numRows > 1) matrixComposer(dataBuff, numRows);
+            else if (numRows > 1) matrixVectorComposerFLAT(dataBuff, numRows);
+            //else if (numRows > 1) matrixComposer(dataBuff, numRows);
             else{
                 Log.e("Format Error", "Row =< 0!");
             System.exit(-1);}
@@ -113,18 +113,18 @@ public abstract class Reader {
                 this.vectorTableFLAT.add(new FlatArrayRealVector(buffArray,columns));
                 dataBuff.position(recordSize);
             }else {
-                this.matriceTableFLAT.add(new FlatArray2DRowRealMatrix(buffArray, numRows, columns));
+               this.matriceTableFLAT.add(new Flatmatrix(ByteBuffer.wrap(buffArray), numRows, columns));
                 dataBuff.position(recordSize);
             }
         } else {
             byte[] buffByte = new byte[recordSize];
             ByteBuffer matrixBuffer = ByteBuffer.wrap(buffByte).putInt(numRows).putInt(columns);
-            //ByteBuffer matrixBuffer = ByteBuffer.wrap(buffByte).order(ByteOrder.LITTLE_ENDIAN).putInt(numRows).putInt(columns);
+
             dataBuff.get(buffByte, HEADER, (numRows * columns * DOUBLE));
             if(numRows==1){
-                this.vectorTableFLAT.add(new FlatArrayRealVector(buffByte,columns));
+                //this.vectorTableFLAT.add(new FlatArrayRealVector(buffByte,columns));
             }else {
-                this.matriceTableFLAT.add(new FlatArray2DRowRealMatrix(buffByte, numRows, columns));
+                this.matriceTableFLAT.add(new Flatmatrix(ByteBuffer.wrap(buffByte), numRows, columns));
             }
         }
     }
@@ -155,12 +155,12 @@ public abstract class Reader {
            //rowDimension-wise composition
             for (int k = 0; k< numRows; k++){
 
-/*
+
                 for(int z =0; z<columns; z++){
                     backingMatrix[k][z] = dataBuff.getDouble();
                 }
 
-*/
+/*
                 // Row blocks to be blocked off for normal composer.
                 byte [] rowbyte = new byte[columns*DOUBLE_SIZE];
                 dataBuff.get(rowbyte);
@@ -173,15 +173,16 @@ public abstract class Reader {
 
                     backingBuffer.get(backingMatrix[k]);
                 }
-
+*/
 
             }
         //timeStamps.add(System.nanoTime());//backing array End
         //
-        Array2DRowRealMatrix minx = new Array2DRowRealMatrix(backingMatrix,false);
+        Array2DRowRealMatrix minx = new Array2DRowRealMatrix(backingMatrix);
         //timeStamps.add(System.nanoTime());//Object Construction _End Composer end
         this.matriceTable.add(minx);
         //Log.i("Minx", "Added");// just for testing remove afterwards
+        backingMatrix=null; // garbage on during test
 
     }
 
@@ -198,7 +199,8 @@ public abstract class Reader {
             System.exit(2);
         }
 
-
+/*
+// Row block dumping
         double [] backingVector = new double[numElements];
         byte [] rowbyte = new byte[numElements*DOUBLE_SIZE];
         dataBuff.get(rowbyte);
@@ -212,30 +214,32 @@ public abstract class Reader {
             backingBuffer.get(backingVector);
         }
 
-/*
+*/ // Element by element dumping (same as ReadIn Chunks)
         double [] backingVector = new double[numElements];
         for (int w=0; w<numElements;w++){
             backingVector[w] = dataBuff.getDouble();
         }
-*/
+
         //timeStamps.add(System.nanoTime());//backing array End
-        ArrayRealVector vinx = new ArrayRealVector(backingVector,false);
+       // ArrayRealVector vinx = new ArrayRealVector(backingVector,false);
 
         //timeStamps.add(System.nanoTime());//Object Construction _End Composer end
 
 
-        vectorTable.add(vinx);
+        //vectorTable.add(vinx);
+        backingVector =null; // just for testing to save memory and fairness
     }
 
 
 
 
     Array2DRowRealMatrix getFirstMatrix(){
-        return matriceTable.get(1);
+        return matriceTable.get(0);
     }
+    Flatmatrix getFirstMYMatrix(){return matriceTableFLAT.get(0);}
 
     ArrayRealVector getFirstVector(){
-        return vectorTable.get(1);
+        return vectorTable.get(0);
     }
 
 

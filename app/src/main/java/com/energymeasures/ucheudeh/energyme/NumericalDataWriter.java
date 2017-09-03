@@ -31,7 +31,7 @@ public class NumericalDataWriter {
     final int INT_SIZE = 4;
     final int DOUBLE_SIZE = 8;
     final int LONG_SIZE = 8;
-    String mode = "regMapped";
+    String mode = "Bulk";
     Context context;
 
 
@@ -45,13 +45,13 @@ public class NumericalDataWriter {
 
     void write(SnapshotsBasket numData) throws IOException {
 
-       // writeBig(numData);
+        //writeBig(numData);
         writeIndi(numData);
     }
 
     void writeBig(SnapshotsBasket numData) throws IOException {
 
-        File path = new File(context.getFilesDir(),mode+"Big"+numData.getGroupType());
+        File path = new File(context.getFilesDir(),mode+"Big3"+numData.getGroupType());
         fc = new FileOutputStream(path).getChannel();
 
         int numMatrix = numData.getNumMatrices();
@@ -60,19 +60,17 @@ public class NumericalDataWriter {
         for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
 
 
-            //ByteBuffer matrixBuffer = constructMatrix(matrix);
+            ByteBuffer matrixBuffer = constructMatrix(matrix);
 
-            //LITTLE ENDIAN
-            ByteBuffer matrixBuffer = constructMatrix(matrix).order(ByteOrder.LITTLE_ENDIAN);
+
 
             fc.write(matrixBuffer);
         }
 
         for (ArrayRealVector vector : numData.getVectorElements()) {
-            //ByteBuffer vectorBuffer = constructVector(vector);
+            ByteBuffer vectorBuffer = constructVector(vector);
 
-            //LITTLE ENDIAN
-            ByteBuffer vectorBuffer = constructVector(vector).order(ByteOrder.LITTLE_ENDIAN);
+
 
             fc.write(vectorBuffer);
         }
@@ -85,7 +83,7 @@ public class NumericalDataWriter {
     void writeIndi(SnapshotsBasket numData)throws IOException{
 
         // a new file per record. First basename for 2k Experiment. The second for normal experiments
-        String basename = "2kExpD_10_"; // 2k experiment D=10 matrix. D=10 => 2^10 x 2^10 (1024x1024)
+        String basename = "regMappedIndidCore";//"2kExpD_11_"; // 2k experiment D=10 matrix. D=10 => 2^10 x 2^10 (1024x1024)
         //String basename = mode+"Indi"+numData.getGroupType();
         int i =0;
         for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
