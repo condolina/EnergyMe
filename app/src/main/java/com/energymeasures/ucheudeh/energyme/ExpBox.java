@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by ucheudeh on 8/20/17.
- */
+ * Created by ucheudeh on 8/20/17. Object to collect measurements.
+ * */
 
 class ExpBox {
     ArrayList<Long> timeStamps;

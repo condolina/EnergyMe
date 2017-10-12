@@ -11,19 +11,18 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 
 /**
  * Created by ucheudeh on 6/12/17.
  *
- * USAGE: This class constructs the header and trailer for the Numerical Data Structure . It
+ * USAGE: This class constructs the header and trailer/payload for the Numerical Data Structure . It
  * is constructed with a File Object passed. Hence it is permanently dedicated to this file.
  *
- * The constructor takes a File Object e.g File file = new File(context.getDir(),mode
+ * The constructor takes a File Object.
  *
- * Write method take a SnapShotbasket (a container for the matrices and vectors we want to sent), and
- * marshals them to a the file including the appropriate headers for a reconstruction by the reader.
+ * Write method take a SnapShotbasket (a container for the matrices and vectors we want to write), and
+ * marshals them to a the file including the appropriate headers.
  */
 
 public class NumericalDataWriter {
@@ -82,9 +81,9 @@ public class NumericalDataWriter {
     }
     void writeIndi(SnapshotsBasket numData)throws IOException{
 
-        // a new file per record. First basename for 2k Experiment. The second for normal experiments
+        // a new file per data unit. First file basename for 2k Experiment. The second for normal experiments
         String basename = "regMappedIndidCore";//"2kExpD_11_"; // 2k experiment D=10 matrix. D=10 => 2^10 x 2^10 (1024x1024)
-        //String basename = mode+"Indi"+numData.getGroupType();
+        //String basename = mode+"Indi"+numData.getGroupType(); //group names dPreamble, dCore, dBoader,dExtreme, dInsane. Can be customized e.g Bulk
         int i =0;
         for (Array2DRowRealMatrix matrix : numData.getMatrixElements()) {
             File path = new File ( context.getFilesDir(),basename.concat("m").concat(Integer.toString(i)).concat(".dat"));
@@ -93,8 +92,6 @@ public class NumericalDataWriter {
 
             ByteBuffer matrixBuffer = constructMatrix(matrix);
 
-            //LITTLE ENDIAN
-            //ByteBuffer matrixBuffer = constructMatrix(matrix).order(ByteOrder.LITTLE_ENDIAN);
 
             fc.write(matrixBuffer);
             fc.close();
@@ -108,7 +105,7 @@ public class NumericalDataWriter {
         for (ArrayRealVector vector : numData.getVectorElements()) {
             File path = new File ( context.getFilesDir(),basename.concat("v").concat(Integer.toString(i)).concat(".dat"));
             //e.g. regMappedv0.dat or 2kExpD_10_v0.dat
-            fc = new FileOutputStream(path).getChannel();// other object gets GC'd
+            fc = new FileOutputStream(path).getChannel();// other fc object gets GC'd
             ByteBuffer vectorBuffer = constructVector(vector);
             fc.write(vectorBuffer);
             fc.close();
@@ -127,8 +124,6 @@ public class NumericalDataWriter {
         ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE));
 
 
-        //Little endian buffer. For ENDIANESS EXPERIMENT
-        //ByteBuffer matrixBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
 
         matrixBuffer.putInt(rowDim).putInt(columnDim);//metadata for this matrix
         double[][] backingMatrix = matrix.getData();
@@ -148,8 +143,6 @@ public class NumericalDataWriter {
         int columnDim = vector.getDimension();
         ByteBuffer vectorBuffer = ByteBuffer.allocate(columnDim*DOUBLE_SIZE+(2*INT_SIZE));
 
-        //Little endian buffer. For ENDIANESS EXPERIMENT
-        //ByteBuffer vectorBuffer = ByteBuffer.allocate(rowDim*columnDim*DOUBLE_SIZE+(2*INT_SIZE)).order(ByteOrder.LITTLE_ENDIAN);
 
 
         vectorBuffer.putInt(rowDim).putInt(columnDim);//metadata for this matrix

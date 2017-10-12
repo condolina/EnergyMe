@@ -14,12 +14,12 @@ import java.util.ArrayList;
 
 /**
  * Created by ucheudeh on 6/11/17. Parent reader class, Composition takes place here
- * Can perform operations in Little_Endian or Big_Endian
+ *
  */
 
 public abstract class Reader {
 
-    String mode;
+    String mode; // e.g mmap,simple
     File path;
     ArrayList<Array2DRowRealMatrix> matriceTable = new ArrayList<>();
     ArrayList<ArrayRealVector> vectorTable = new ArrayList<>();
@@ -39,20 +39,22 @@ public abstract class Reader {
     ByteBuffer getBuffer(int size){
         /*
         Litrature suggest that there are benefits with using a direct buffer
-        - one less copy process, OS always requires a direct buffer even if it is temporary to
-            interact with the indirect buffer. Reason being that OS prefers a contigous sequence of
-            byte spaces in memory if it is going to interact directly with such a buffer. Given that
-            the OS will directly access the user space memory, with out recurse to to use application
-            about any form of indirection that may otherwise exist, for example, in an indirect
-            buffer where there are not gurantees of a contigous allocation. (Java NiO pg 45)
+        - one less copy process per buffer trip, OS always requires a direct buffer even if it is temporary to
+            interact with the indirect buffer. Reason being that OS prefers a contiguous sequence of
+            pages in memory if it is going to interact directly with such a buffer. Given that
+            the OS will directly access the user space memory, with out recurse to to user application
+            about any form of indirection or meaning that may otherwise exist. For example, in an indirect
+            buffer where there are not gurantees of a contigous allocation, or a wrapped ByteBuffer
+             for which meaning exisit only within Java and is not really an allocation but just a
+             reservation of heap (ref: Java NiO pg 45).
+            NOTE: If any form of indirect buffer is used, wrapped or allocated, Java copies creates a
          */
         buffArray = new byte[size]; // will be used as universal backing array for this Reader
-        return ByteBuffer.wrap(buffArray);
-        //return ByteBuffer.wrap(buffArray).order(ByteOrder.LITTLE_ENDIAN);
+        return ByteBuffer.wrap(buffArray); //indirect buffer
 
-        //return ByteBuffer.allocate(size);
-        //return ByteBuffer.allocateDirect(size);
-        //return ByteBuffer.allocateDirect(size).order(ByteOrder.LITTLE_ENDIAN);
+
+        //return ByteBuffer.allocate(size); // indirect buffer
+        //return ByteBuffer.allocateDirect(size); //direct buffer
 
     }
 
@@ -61,13 +63,13 @@ public abstract class Reader {
 
 
          /*
-         This methods recieves a Buffer may contain 1 to N records and composes all records in Buffer
-         by looping thru each record header in the buffer. Every buffer starts with a header:
-         number of rows (see diagram of the structure of the buffer). This method uses the header
+         This methods receives a Buffer, which  may contain 1 to N data units/records and composes all data units in Buffer
+         by looping thru each record header in the buffer. Every buffer starts with a header: rank,rows, columns
+         rank maybe skipped if only one or two dimensions are used in application as was this case. This method uses the header
          identify matrix or vector and calls the appropriate Composer
           */
         while (dataBuff.hasRemaining()) {
-// method calls will be uncommented accordingly to test different factors
+            // method calls will be uncommented accordingly to test different factors
             int numRows = dataBuff.getInt();
 
             //FLAT structure
@@ -90,12 +92,8 @@ public abstract class Reader {
 
     private void matrixVectorComposerFLAT(ByteBuffer dataBuff, int numRows) {
         /*
-        This method will attempt to reduce latency by procrasinating the structural definitaion
-        of the numerical data. The raw bytes will be used to create a FlatArray2DRowMatrix and
-        FlatArrayRealVector respectively. This is the main bane of this research as it repesents
-        an opposite extreme from the custom of early "humanization" of numerical data for computer
-        systems. Humanization here refers to the act of delibrately or automatically preserving
-        numerical data on computer systems in chalkboard form.
+        This method will attempt to reduce latency by delaying the structural definition
+        of the numerical data, i.e. no POST-PROCESSING
 
          */
         final int HEADER = 8;
@@ -134,12 +132,6 @@ public abstract class Reader {
      */
 
     private void matrixComposer(ByteBuffer dataBuff, int numRows){
-        /*
-        Some kind of lock maybe  required on the ByteBuffer or the file channel. So no other
-        method advances the position. Otherwise Absolute gets(index) will be used on the buffer.
-         */
-
-        //timeStamps.add(System.nanoTime());//Compose recode start will be many depending on quantity
 
 
         int columns = dataBuff.getInt();
@@ -166,7 +158,7 @@ public abstract class Reader {
                 dataBuff.get(rowbyte);
 
                 DoubleBuffer backingBuffer = ByteBuffer.wrap(rowbyte).asDoubleBuffer();
-                //DoubleBuffer backingBuffer = ByteBuffer.wrap(rowbyte).order(ByteOrder.LITTLE_ENDIAN).asDoubleBuffer();
+
                 if(backingBuffer.hasArray()){
                     backingMatrix[k]=backingBuffer.array();
                 }else{
@@ -200,13 +192,12 @@ public abstract class Reader {
         }
 
 /*
-// Row block dumping
+// Row-block dumping: processes row-by-row
         double [] backingVector = new double[numElements];
         byte [] rowbyte = new byte[numElements*DOUBLE_SIZE];
         dataBuff.get(rowbyte);
 
         DoubleBuffer backingBuffer= ByteBuffer.wrap(rowbyte).asDoubleBuffer();
-        //DoubleBuffer backingBuffer= ByteBuffer.wrap(rowbyte).order(ByteOrder.LITTLE_ENDIAN).asDoubleBuffer();
         if(backingBuffer.hasArray()){
             backingVector=backingBuffer.array();
         }else{

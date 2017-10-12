@@ -37,28 +37,18 @@ JNIEXPORT jint JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleReader_na
     buff_in = (*env)->GetDirectBufferAddress(env, buf);
     int _len = (int) len;
     int _bufOffset = (int) bufOffset;
-    /*  const char *path_ = (*env)->GetStringUTFChars(env,path, 0);
-     if ((fd = open(path_,O_RDONLY)) < 0) {
-             printf("%s: cannot open %s\n", "Cmessenger",path);// send exeption to java
-             exit(2);
-         }
-      if ((fstat(fd, &stbuf) != 0) || (!S_ISREG(stbuf.st_mode))) {
-      printf("%s: cannot determine file _size %s\n", "Cmessenger",path);// send exeption to java
-      exit(4);
-      }
 
-
-*/
-
-
-    //int retAdv = posix_fadvise(_fd, _offset, 0, POSIX_FADV_SEQUENTIAL);
 
     int retAdv =0;
+
+    //int retAdv = posix_fadvise(_fd, _offset, 0, POSIX_FADV_SEQUENTIAL);//Kernel Hint for seq read.
+
+
 
 
     if (_offset==0){
         int count = read(_fd, buff_in+_bufOffset, _len);
-        //retAdv = posix_fadvise(_fd, _offset, 0, POSIX_FADV_SEQUENTIAL);
+        //retAdv = posix_fadvise(_fd, _offset, 0, POSIX_FADV_SEQUENTIAL);//Lazy Hint for seq read.
 
         //retAdv = posix_fadvise(_fd, _offset, -len, POSIX_FADV_NOREUSE);
         return count;
@@ -68,39 +58,7 @@ JNIEXPORT jint JNICALL Java_com_energymeasures_ucheudeh_energyme_SimpleReader_na
         return count;
     }
 }
-       /* file_size = stbuf.st_size;
 
-        jbyteArray ret = (*env)->NewByteArray(env,file_size);
-
-         /*set read buffer size here
-
-        MAXBUF = 2048;
-
-        /*MAXBUF = file_size;
-
-        jbyte buf[MAXBUF];
-
-        while ( (byte_read = read(fd,buf,MAXBUF)) > 0 ){
-
-
-       		    (*env)->SetByteArrayRegion(env,ret, (i*MAXBUF), byte_read, buf);//seting byte array region
-                i++;
-                total_read+=byte_read;
-
-       		}
-        if (total_read != file_size){
-        printf("%s: Read/Filesize mismatch %s\n", "Cmessenger",path);// send exeption to java
-                exit(4);
-        }
-
-       	if (close(fd) < 0) {
-       		printf("%s: cannot close %s\n", "Cmessenger",path);//send exception to Java
-       		exit(3);
-       	}
-       	return ret;
-       }
-
-*/
 
 
 

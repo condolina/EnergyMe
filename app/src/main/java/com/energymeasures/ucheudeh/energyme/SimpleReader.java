@@ -28,10 +28,10 @@ import java.util.Random;
 
 class SimpleReader extends Reader {
     final int PAGE_SIZE =4096;
-    final double MAGIC_RATIO = 0.00003232;
+
     private int nativeFD=0;
     //int objectCounter =0;
-    ByteBuffer tmp =null;
+
 
     // the Overloaded read method does not use this object, but makes multiplstrms
 
@@ -87,8 +87,12 @@ class SimpleReader extends Reader {
 
         FileChannel fc = connect(path);
         int fileSize = (int)fc.size();
-        bufSize=getBufSize(fileSize); // get magic buffer Size
 
+        int rCount,bCount,inBytes = 0;
+        double [] vector = null;
+        double [][] matrix = null;
+        int sysCallsCount =1; // set to 1 due to extra call that returned EoF.
+        boolean doneRead = false; // consider optimizatin to Bitfield
 
         int row = 0;
         int column = 0;
@@ -97,6 +101,7 @@ class SimpleReader extends Reader {
         final int HEADER = 8;
         ByteBuffer buf=null;
         byte [] bufBack=null;
+        ByteBuffer tmp =null;
 
         if(direct == 1){
             buf = ByteBuffer.allocateDirect(bufSize);
@@ -106,19 +111,15 @@ class SimpleReader extends Reader {
 
         }
 
-        int rCount,bCount,inBytes = 0;
-        double [] vector = null;
-        double [][] matrix = null;
-        int sysCallsCount =1; // set to 1 due to extra call that returned EoF.
-        boolean doneRead = false; // consider optimizatin to Bitfield
 
 
 
-       //while((rCount= fc.read(buf) )!=-1) { //normal read
-        while((rCount=readInNative(buf,inBytes))!=-1){//nativeRead
+
+       //while((rCount= fc.read(buf) )!=-1) { //normal read. Uncomment for pure Java reads. Then comment nativeRead.
+        while((rCount=readInNative(buf,inBytes,tmp))!=-1){//nativeRead pass in null reference tmp
             sysCallsCount++;
 
-            if (rCount == 0) break;// Optimize this line, extra IO just to get file end!
+            if (rCount == 0) break;
             inBytes+=rCount;
             buf.flip();
             while (buf.hasRemaining()) {
@@ -192,15 +193,10 @@ class SimpleReader extends Reader {
         return sysCallsCount; // or bytes read
     }
 
-    private int getBufSize(int fileSize) {
-        // pagesize is a constant 4096 for ANDROID, WE FOUND OUT IN THE MAIN_Activity once
-        int magicBufSize;
-        magicBufSize = ((int)(fileSize*MAGIC_RATIO-1.28915))*PAGE_SIZE ; // obtained after developing prediction model ffrom regression tests.
-        return magicBufSize;
-    }
 
 
-    int readInNative( ByteBuffer buf, int offset) throws IOException{
+
+    int readInNative( ByteBuffer buf, int offset, ByteBuffer tmp) throws IOException{
         // from the calling method, Offset it the size of the already read bytes returned previously
         if (nativeFD == 0)setNativeFD();
         int pos = buf.position();

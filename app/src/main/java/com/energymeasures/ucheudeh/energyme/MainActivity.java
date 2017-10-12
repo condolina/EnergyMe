@@ -28,8 +28,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    String [] exArr = new String[]{"A","B","C","D","E","F","G","H"}; // modifiy experiment name here to give propername csv file
-    String ex = "L";
+    //String [] exArr = new String[]{"A","B","C","D","E","F","G","H"}; //2kExperiment: modify experiment name here to give proper name csv file
+    String ex = "L"; //Experiment Prefix. e.g L3
     File resultDir;
     File experimentDir;
     File processedDataDir;
@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i("EnergyMe", message);
 
         try {
-            //cleanSampleFolder(context); qucik and dirty maintenance method
+
             prepareStorageRights();
             setupExperiment(context); //READ experiments starts Here!!
         } catch (IOException e) {
@@ -56,10 +56,10 @@ public class MainActivity extends AppCompatActivity {
         cleanUpFolders();
         cleanUpExpFolders();
 
-       // Run some unitilities to find page size and block size
 
 
-       // find page Size and block size
+
+       // find page Size and block size. Page size was obtained in the Native environment
 
 /*
         File path = Environment.getDataDirectory();
@@ -76,12 +76,12 @@ public class MainActivity extends AppCompatActivity {
         //seed array need to generate data groups
 
 
-//for read only block off from this point
+//for READ EXPERIMENTS, block off from this point
 
-        LinkedHashMap<String,int[]> dbanke = new LinkedHashMap<>();
-
+// DATA UNITS SAMPLE CREATION
 /*
 
+        LinkedHashMap<String,int[]> dbanke = new LinkedHashMap<>();
 
         dbanke.put("dPreamble",new int[]{10,10,10,10});//{1,2,3,4}largest matrix/vector has 256 doubles : PRE_AMBLE
        // dbanke.put("dCore",new int[]{5,6,7,8});//largest matrix/vector has 65,536 doubles: CORE
@@ -293,6 +293,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
     private void callExperiments(File file, Context context, List<String[]> expRuns) {
+        /*
+        Read the script file for an experiments.
+        Divide the experiment into runs.
+        Dispatch experiment runs to the Reader.
+        Update the script file with completed experiments.
+        Restart app after each run. Continue where we left off on script file upon app restart.
+                      */
 
 // SET 2: Set runsize
         int runSize = getRunSize(expRuns); // number of experiment before restart (App or Phone)
@@ -301,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i=0;i<expRuns.size();i+=runSize) { // |indicator|Filelabelheader|DirectBuf|Buffsize|Native or Mode|
             if ((expRuns.get(i)[0]).equals("1")) {// first column tells if this experiment had been run before
-                // first hit means we continue runnign experiment from hear after resTART
+                // first hit means we continue running experiment from hear after app or device reSTART
                 // we take the next runSize experiments
                 int start = i;
                 ex=Integer.toString(i/runSize); //sets file labelHeader as batch of runSize from 0,1,2...
@@ -310,15 +317,15 @@ public class MainActivity extends AppCompatActivity {
                     replicate.add(expRuns.get(i+k)); // add the next runSize runs to replicate list
                 }
 
-                replicate = experiment(context,replicate); // new returned replicate
+                replicate = experiment(context,replicate); // newly returned replicate
                 for(int k =0;k<runSize;k++){
-                    expRuns.get(start+k)[0] = replicate.get(k)[0]; // update masterlist from new replicate
+                    expRuns.get(start+k)[0] = replicate.get(k)[0]; // update master Replicate list from returned replicate
                 }
 
-                writeCvs2file(file, expRuns);
+                writeCvs2file(file, expRuns); // save updated experiment Replicated list to file.
                 // Force application Restart Here
-                //System.exit(0);
-                //restartApplication(context);
+                System.exit(0);
+
                 // When application restarts it perform remaining replicate one by one with restarts
             }
 
@@ -328,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private int getRunSize(List<String[]> expRuns) {
+        //Determines the Runsize from the experiment script
         String s = expRuns.get(0)[4];
         int count = 0;
         while (count<expRuns.size()){
@@ -366,14 +374,10 @@ public class MainActivity extends AppCompatActivity {
             int repeats = 1; // number of read repeats
             // Tag to help identify the files and name the CVS files. verify that files exist
 
-            String[] experimentTag = {" test"};//,"dCore","dBoarder","dBoarder" ,control which group is read with tag
+            String[] experimentTag = {" test"};//,"dCore","dBoarder","dBoarder" ,control which file group is read with tag
             for(String tag: experimentTag)
 
                 replicate = experimentRead(context, repeats, tag, replicate);//
-            //cacheCleaner(context);
-            //System.gc();
-            // try {
-            //Thread.sleep(100);
 
 
         } catch (IOException e) {
@@ -407,6 +411,8 @@ public class MainActivity extends AppCompatActivity {
 
         long eMeWEtime = System.nanoTime();
         Log.i("EnerMeWriteTIme-", Long.toString(eMeWEtime-eMeWStime));
+
+        // Unblock as desired. Will generate files for the other Serilization options and random access
 /*
 
         // eneM: Random Access Test Files
@@ -465,22 +471,11 @@ public class MainActivity extends AppCompatActivity {
         File file;
 
 
-
-
-
-
-
         if(!isExternalStorageWritable()){
             file = new File (context.getFilesDir(),"cvs"+tag+ System.currentTimeMillis()+".csv");}
         else{
 
-
-
-
-
-
             file = new File (resultDir,ex+"CSV_"+tag+System.currentTimeMillis()+".csv");
-
 
         }
         CSVWriter results = new CSVWriter(new FileWriter(file));
@@ -490,11 +485,13 @@ public class MainActivity extends AppCompatActivity {
 
         /*
 
-        Assumption here is that it is possible to create a Reader without actually reading anything
-        Time log begins when the read method is called on the Reader (INTERNAL VALIDATION)
+        Assumption here is that it is possible to create a Reader without actually reading anything.
+        Time log begins when the read method is called on the Reader (INTERNAL VALIDATION).
+        Unblock as desired for the different read paradigms
+        */
 
-         */
-        //ArrayList<Long> timeStamps;
+
+        //ArrayList<Long> timeStamps; // for other read paradigms that do not use ExBox object for measurements
         ExpBox exBox = null;
         for (int i=0; i<repeats;i++) {
             ArrayList<Long> timeStamps = new ArrayList<>();// will be written out to CVS later
@@ -705,9 +702,7 @@ public class MainActivity extends AppCompatActivity {
 
         //timeStamps.add(System.nanoTime());
 
-                int [] bringList = new int[]{3,1,2};
-
-
+                int [] bringList = new int[]{3,1,2}; // hardcoded index of the data units to fetch
 
         long eMeRSRndtime = System.nanoTime();
         File pathRnd = new File (context.getFilesDir(),"eneMRnd"+tag+".dat");
@@ -755,69 +750,43 @@ public class MainActivity extends AppCompatActivity {
         File path = new File (context.getFilesDir(),"regMappedIndidCorem3.dat");
 
         SimpleReader regMapRIndi = new SimpleReader(path);// same path as above but not needed
-        // we are reading 4 matrices and 4 vectors files, we add the headers for CVS. First m then v
 
-        // timing for each file read happens in the actual reader (read() method)
-        /*
-        for (int i = 0; i<4; i++){
-            headerCan.add(ex+"_"+tag+"m"+Integer.toString(i));//add matrix header
-        }
-        for (int i = 0; i<4; i++){
-            headerCan.add(ex+"regMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
-        }
-*/
-
-       // long duration = eMeREInditime-eMeRSInditime;
-        ExpBox exBox = null;
+        //ExpBox exBox = null;
        // return regMapRIndi.read(context,"regMappedIndi"+tag);
-        //ExpBox exBox = regMapRIndi.read(context,"2kExpD",replicate,clustering);
-
+        ExpBox exBox = regMapRIndi.read(context,"2kExpD",replicate,clustering);
+/*
         long eMeRSInditime = System.nanoTime();
         regMapRIndi.read(context,"regMappedIndidCorem3");
         long eMeREInditime = System.nanoTime();
         long duration = eMeREInditime-eMeRSInditime;
         Log.i("Addition time Apache- ", Long.toString(duration));
-
-       Array2DRowRealMatrix  mat = regMapRIndi.matriceTable.get(0);
+//      Addition experiments
+        Array2DRowRealMatrix  mat = regMapRIndi.matriceTable.get(0);
         Array2DRowRealMatrix me = new Array2DRowRealMatrix(mat.getData().clone());
 
 
         Array2DRowRealMatrix uli = mat.add(me);
-
+*/
         headerCan.addAll(exBox.headers);
         return exBox;
     }
 
     private ExpBox callReadMMapIndi(Context context, String tag, ArrayList<String> headerCan, List<String[]> replicate) throws IOException {
-        //cacheCleaner(context);
-        //long eMeRSInditime = System.nanoTime();
+
         File path = new File (context.getFilesDir(),"regMappedBig"+tag);
 
         MappedReader mmapRIndi = new MappedReader(path);// same path as above but not needed
-        // we are reading 4 matrices and 4 vectors files, we add the headers for CVS. First m then v
-/*
-        // timing for each file read happens in the actual reader (read() method)
-        for (int i = 0; i<4; i++){
-            headerCan.add(ex+"MMappedIndi"+tag+"m"+Integer.toString(i));//add matrix header
-        }
-        for (int i = 0; i<4; i++){
-            headerCan.add(ex+"MMappedIndi"+tag+"v"+Integer.toString(i));//add vector header
-        }
-*/
-        //long eMeREInditime = System.nanoTime();
-        // long duration = eMeREInditime-eMeRSInditime;
-        //Log.i("EnerMeREADTImeIndi   - ", Long.toString(duration));
+
         ExpBox exBox = mmapRIndi.read(context,"regMappedIndidCore",replicate); //ReadMode for mmap ="0"
         headerCan.addAll(exBox.headers);
         return exBox;
     }
 
     private ExpBox callReadeneMBig(Context context, String tag, ArrayList<String> headerCan, List<String[]> replicate) throws IOException {
-        //cacheCleaner(context);
         boolean clustering = true;
         headerCan.add(ex+"EnerMeREADTBig");
         long eMeRStime = System.nanoTime();
-       // File path = new File (context.getFilesDir(),"regMappedBig"+tag);
+       // File path = new File (context.getFilesDir(),"regMappedBig"+tag); // match to actual file path (name)
         File path = new File (context.getFilesDir(),"BulkBig"+tag);
 
         SimpleReader regMapR = new SimpleReader(path);
@@ -825,13 +794,7 @@ public class MainActivity extends AppCompatActivity {
         headerCan.addAll(exBox.headers);
         return exBox;
 
-        //regMapR.read(context, tag);
 
-        //long eMeREtime = System.nanoTime();
-        //long duration = eMeREtime-eMeRStime;
-        //Log.i("EnerMeREADTBig       - ", Long.toString(duration));
-
-        //return duration;
     }
 
     String [] long2String(ArrayList timeStamps) throws IOException {
